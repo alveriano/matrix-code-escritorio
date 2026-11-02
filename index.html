@@ -235,7 +235,38 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .ig .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .ig .chart .bar{fill:var(--accent);opacity:.85} .ig .chart .bar.part{opacity:.4} .ig .chart .bar:hover{opacity:1}
 .ig .chart text{font-size:10px;fill:var(--muted);font-family:var(--f-mono)}
+.ig .cmp-top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ig .cmp-top h3{margin:0}
+.ig .chips{display:flex;flex-wrap:wrap;gap:6px}
+.ig .chips button{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;font-size:12px}
+.ig .chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ig .leg{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12px;color:var(--muted);margin-bottom:6px;font-variant-numeric:tabular-nums}
+.ig .leg b{color:var(--text,inherit);font-weight:600}
+.ig .leg i{display:inline-block;width:18px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin-right:6px}
+.ig .leg i.ant{border-top:2px dashed var(--muted)}
+.ig .cmp{position:relative}
+.ig .cmp .grid{stroke:var(--line);stroke-width:1}
+.ig .cmp .l-at{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.ig .cmp .l-an{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4;stroke-linejoin:round;opacity:.8}
+.ig .cmp .cross{stroke:var(--muted);stroke-width:1}
+.ig .cmp .dot-at{fill:var(--accent);stroke:var(--panel);stroke-width:2}
+.ig .cmp .dot-an{fill:var(--muted);stroke:var(--panel);stroke-width:2}
+.ig .tip{position:absolute;pointer-events:none;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.ig .tip[hidden]{display:none}
 .ig .tbl{overflow:auto}
+.ig .top{border:1px solid var(--line);border-radius:12px;padding:12px}
+.ig .top ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ig .top li{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--bg)}
+.ig .top .pos{font-family:var(--f-display);font-weight:900;font-size:20px;text-align:center;color:var(--muted)}
+.ig .top .cap{min-width:0}
+.ig .top .cap p{margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ig .top .cap small{color:var(--muted);font-size:12px}
+.ig .top .nums{display:flex;gap:12px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ig .top .nums b{color:inherit;font-weight:600}
+.ig .top .nums b.on{color:var(--accent)}
+.ig .top a{color:var(--accent);text-decoration:none;font-size:12px}
+.ig .top .nota{margin:8px 0 0;font-size:12px;color:var(--muted)}
+@media (max-width:760px){.ig .top li{grid-template-columns:24px 1fr}.ig .top .nums{grid-column:2}}
 .ig table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
 .ig th,.ig td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 .ig th:first-child,.ig td:first-child{text-align:left}
@@ -535,6 +566,9 @@ const DEPTS = [
   {t:"Programação", c:"#4ADE80", a:[
     ["Xanax","matrix","Programador da Matrix Code. Escreve, revisa e conserta código: sites, scripts, automações e integrações.","Use o agente Xanax para revisar o código do site",["Compilando…","Rodando os testes","Revisando o pull request","git push origin main"]],
   ]},
+  {t:"Estratégia", c:"#D9A441", a:[
+    ["Roger","chart","Estrategista do CowTalk. Lê os números do Instagram ao vivo, diz o que está funcionando e o que mudar, e no começo de cada mês faz a revisão com as metas e a apresentação.","Use o agente Roger para fazer a revisão do mês do Instagram do CowTalk",["Lendo o painel do Instagram","Comparando com as metas","Separando os melhores ganchos","Montando a apresentação"]],
+  ]},
 ];
 const SCREENS = {matrix:'<canvas class="rain" width="208" height="128"></canvas>', video:'<span class="play"></span><span class="bar"></span>', chart:"<i></i><i></i><i></i><i></i>", text:"<i></i><i></i><i></i>", slides:"<i></i>".repeat(5), wave:"<i></i>".repeat(8), palette:"<i></i>".repeat(6), target:"<i></i><i></i><i></i>", feed:"<i></i>".repeat(5)};
 const CHAT = ["E aí, como tá o corte?","Viu o alcance de ontem?","Bora fazer um teste?","Me manda o briefing","Ficou top!","Café depois?","Esse gancho é bom","Precisa de ajuda?"];
@@ -598,12 +632,12 @@ function spriteSVG(k, shirt){
 }
 /* visuais próprios dos agentes */
 const PJ_SKIN = {g:"m", skin:"#E9B98F", hair:"#2A2018", style:"lado", pants:"#23293A", glasses:true, phones:true, jacket:"#2B3A55", tie:"#7A2E2E", shirt:"#EDE6D6"};
-const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo", pants:"#6B5A7A", skirt:true, earrings:true, shirt:"#F5CFDC"}, "Patrick Jane":PJ_SKIN, "Xanax":{g:"m", skin:"#C68A5E", hair:"#1B1B1F", style:"raspado", pants:"#1F2A24", beard:true, glasses:true, phones:true, shirt:"#14532D"}};
+const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo", pants:"#6B5A7A", skirt:true, earrings:true, shirt:"#F5CFDC"}, "Patrick Jane":PJ_SKIN, "Xanax":{g:"m", skin:"#C68A5E", hair:"#1B1B1F", style:"raspado", pants:"#1F2A24", beard:true, glasses:true, phones:true, shirt:"#14532D"}, "Roger":{g:"m", skin:"#E0AC84", hair:"#B9B2A8", style:"curto", pants:"#2F3A4F", beard:true, glasses:true, jacket:"#3B3B3B", tie:"#C78A1E", shirt:"#F2EEE4"}};
 
 /* ---------- planta ---------- */
 /* fileira de cima: recepção, edição, design, copa · corredor · fileira de baixo: roteiro, estratégia, anúncios, métricas */
-const W = 1580, RH = 380, CORR = 110, H = RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
-const TOP = [{k:"recep", w:480}, {k:0, cols:1, w:400}, {k:2, cols:1, w:400}, {k:"copa", w:0}];
+const W = 1980, RH = 380, CORR = 110, H = RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
+const TOP = [{k:"recep", w:480}, {k:0, cols:1, w:400}, {k:2, cols:1, w:400}, {k:3, cols:1, w:400}, {k:"copa", w:0}];
 const ROOMS = [];
 function rowRooms(list, y, db){
   list.forEach(s => { if (s.cols && !s.w) s.w = s.cols * CELL + 56; });
@@ -661,6 +695,7 @@ const FUR = {
   arquivo:[44, 80, `<svg viewBox="0 0 44 80">${SH(22, 77, 21)}<rect x="2" y="8" width="40" height="68" rx="2" fill="#9AA3AD"/>${rep(3, i => `<rect x="5" y="${12 + i * 21}" width="34" height="18" rx="1.5" fill="#B8C0C9"/><rect x="17" y="${19 + i * 21}" width="10" height="3" rx="1" fill="#6B7280"/>`)}<rect x="5" y="1" width="22" height="8" fill="#fff" transform="rotate(-5 16 5)"/><rect x="15" y="2" width="22" height="7" fill="#F4E3B5"/></svg>`],
   rack:[44, 100, `<svg viewBox="0 0 44 100">${SH(22, 97, 21)}<rect x="1" y="0" width="42" height="95" rx="3" fill="#15191F"/><rect x="4" y="3" width="36" height="89" fill="#0B0E12"/>${rep(8, i => `<rect x="6" y="${6 + i * 11}" width="32" height="8" rx="1" fill="#1E242C"/><circle class="led" style="animation-delay:${(i * .37) % 1.3}s" cx="10" cy="${10 + i * 11}" r="1.3" fill="#4ADE80"/><circle class="led" style="animation-delay:${(i * .61) % 1.1}s" cx="14" cy="${10 + i * 11}" r="1.3" fill="${i % 3 ? "#4ADE80" : "#F0B83C"}"/><rect x="20" y="${9 + i * 11}" width="15" height="2" fill="#2B333D"/>`)}</svg>`],
   quadro:[100, 60, `<svg viewBox="0 0 100 60"><rect width="100" height="60" rx="3" fill="#9AA3AD"/><rect x="3" y="3" width="94" height="54" fill="#F7FAF8"/><g fill="none" stroke="#16A34A" stroke-width="1.6"><rect x="10" y="10" width="20" height="12" rx="2"/><rect x="40" y="10" width="20" height="12" rx="2"/><rect x="70" y="10" width="20" height="12" rx="2"/><path d="M30 16h10M60 16h10"/></g><g stroke="#2F6FD6" stroke-width="1.4"><path d="M10 32h30M10 38h46M14 44h24M14 50h34"/></g><path d="M66 32l8 8-8 8" fill="none" stroke="#E5533D" stroke-width="2"/></svg>`],
+  metas:[110, 66, `<svg viewBox="0 0 110 66"><rect width="110" height="66" rx="3" fill="#2B2F38"/><rect x="3" y="3" width="104" height="60" fill="#F7F3E8"/><path d="M12 50h86" stroke="#9AA3AD" stroke-width="1"/>${[[16,30],[30,24],[44,18],[58,22],[72,12],[86,8]].map(([x, h], i) => `<rect x="${x}" y="${50 - h * 1.2}" width="9" height="${h * 1.2}" rx="1" fill="${i > 3 ? "#D9A441" : "#3E5A4C"}"/>`).join("")}<path d="M14 40l14-6 14-8 14 4 14-12 14-6" fill="none" stroke="#C8553D" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="98" cy="12" r="2.4" fill="#C8553D"/></svg>`],
   pufe:[56, 44, `<svg viewBox="0 0 56 44">${SH(28, 41, 26)}<path d="M6 34q-6-20 10-28 12-6 24 0 16 8 10 28-8 6-22 6T6 34z" fill="#166534"/><path d="M14 14q8-6 18-3" stroke="rgba(255,255,255,.25)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`],
   telao:[150, 62, `<svg viewBox="0 0 150 62"><rect width="150" height="62" rx="4" fill="#0B0E12"/></svg><canvas class="rain" width="288" height="112" style="position:absolute;left:3px;top:3px;width:144px;height:56px;border-radius:2px"></canvas>`],
   banco:[96, 30, `<svg viewBox="0 0 96 30">${SH(48, 27, 46)}<rect x="8" y="12" width="4" height="14" fill="#3A3F48"/><rect x="84" y="12" width="4" height="14" fill="#3A3F48"/>${rep(3, i => `<rect x="2" y="${2 + i * 4}" width="92" height="3.2" rx="1.5" fill="${i % 2 ? "#9C6B43" : "#B07D52"}"/>`)}</svg>`],
@@ -698,13 +733,19 @@ html += fur("telao", PG.x + PG.w / 2 - 75, PG.y + 10, "estudio", {lit:true, z:4}
   + fur("quadro", PG.x + PG.w - 116, PG.y + 14, "quadros", {z:4}) + fur("pufe", PG.x + 26, PG.y + 250, "moveis") + fur("pufe", PG.x + 86, PG.y + 262, "moveis")
   + fur("tree", PG.x + PG.w - 50, PG.y + 252, "plantas") + fur("abajur", PG.x + PG.w - 44, PG.y + 120, "moveis", {lit:true})
   + glow(PG.x + PG.w / 2, PG.y + 50, 110, "estudio", "rgba(90,255,140,.55)") + glow(PG.x + 64, PG.y + 60, 70, "estudio", "rgba(90,255,140,.4)") + glow(PG.x + PG.w - 27, PG.y + 134, 80, "moveis");
+/* estratégia */
+const ES = ROOMS.find(r => r.key === 3);
+html += fur("metas", ES.x + ES.w / 2 - 55, ES.y + 12, "quadros", {z:4}) + fur("estante", ES.x + 18, ES.y + 14, "moveis") + fur("quadro", ES.x + ES.w - 116, ES.y + 14, "quadros", {z:4})
+  + fur("pufe", ES.x + 26, ES.y + 262, "moveis") + fur("mesinha", ES.x + 90, ES.y + 290, "moveis") + fur("tree", ES.x + ES.w - 50, ES.y + 252, "plantas")
+  + fur("abajur", ES.x + ES.w - 44, ES.y + 120, "moveis", {lit:true})
+  + glow(ES.x + ES.w / 2, ES.y + 50, 110, "quadros", "rgba(255,206,120,.5)") + glow(ES.x + ES.w - 27, ES.y + 134, 80, "moveis");
 /* copa */
 html += fur("cozinha", COPA.x + 14, COPA.y + 10, "moveis") + fur("geladeira", COPA.x + COPA.w - 66, COPA.y + 12, "moveis") + fur("mesa", COPA.x + COPA.w / 2 - 60, COPA.y + 160, "moveis")
   + fur("plant", COPA.x + 18, COPA.y + 290, "plantas") + fur("plant", COPA.x + COPA.w - 54, COPA.y + 290, "plantas")
   + glow(COPA.x + 44, COPA.y + 30, 60, "moveis", "rgba(127,227,240,.4)") + glow(COPA.x + COPA.w / 2, COPA.y + 190, 90, "moveis");
 /* corredor */
-html += fur("banco", ED.x + 70, RH + 76, "moveis") + fur("banco", PG.x + 230, RH + 76, "moveis") + fur("plant", ED.x + ED.w - 20, RH + 24, "plantas") + fur("plant", 14, RH + 24, "plantas") + fur("plant", W - 54, RH + 24, "plantas")
-  + rep(8, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
+html += fur("banco", ED.x + 70, RH + 76, "moveis") + fur("banco", PG.x + 230, RH + 76, "moveis") + fur("banco", ES.x + 150, RH + 76, "moveis") + fur("plant", ED.x + ED.w - 20, RH + 24, "plantas") + fur("plant", 14, RH + 24, "plantas") + fur("plant", W - 54, RH + 24, "plantas")
+  + rep(10, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
 AG.forEach(a => {
   html += `<span class="chair" style="left:${a.hx - 16}px;top:${a.hy - 32}px;z-index:${Math.round(a.hy) - 2}"></span>`;
   html += `<span class="desk on" id="desk${a.k}" style="left:${a.deskX - 75}px;top:${a.deskY}px;z-index:${Math.round(a.deskY + 34)};--c:${a.c}">${a.s === "papers" ? `<span class="mon"><span class="screen s-text">${SCREENS.text}</span></span><span class="top"></span>${[[66,26],[84,34],[102,18]].map(([l, h]) => `<span class="pile" style="left:${l}px;--h:${h}px"></span>`).join("")}${[[12,6,-9],[34,10,7],[118,4,-4],[128,12,11],[52,14,-3]].map(([l, tp, r]) => `<span class="sheet" style="left:${l}px;top:${tp}px;transform:rotate(${r}deg)"></span>`).join("")}<span class="pens"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>` : `<span class="mon"><span class="screen s-${a.s}">${SCREENS[a.s]}</span></span><span class="mon mon2"><span class="screen ${a.s === "matrix" ? "s-term" : "s-tl"}">${a.s === "matrix" ? "<i></i><i></i><i></i><i></i>" : "<i></i><i></i><i></i><b></b>"}</span></span><span class="top"></span><span class="kbd"></span><span class="mug"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>`}`;
@@ -727,7 +768,7 @@ const oldMe = store.get("torre-eu-skin", 0);
 function cfgDefault(){
   return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:3,
     light:"dia", names:false, fast:false, roam:false, title:"Matrix Code", sofa:"#166534",
-    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
+    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"carpete", c:"#D9A441"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
     deco:{plantas:true, tapetes:true, quadros:true, estudio:true, moveis:true}};
 }
 const CFG = (() => { const d = cfgDefault(), s = store.get("torre-cfg", {}) || {};
@@ -838,11 +879,12 @@ setInterval(() => {
 }, 1500);
 
 /* ---------- pedidos ---------- */
-const BOTH = new Set(["Xanax"]);
+const BOTH = new Set(["Xanax","Roger"]);
 const LOCAL = new Set(["Patrick Jane","Cortes CowTalk","Briefing de Carrossel","Carrossel Tweet","Modelo 1 · Motion","Modelo 3 · Ritmo","Modelo 4 · Tipográfico","Transcrição","Plano de Edição"]);
 const IDEAS = {
   "Xanax":["Revisar o código do site da Matrix Code","Script que renomeia os vídeos da pasta bruto"],
   "Patrick Jane":["Editar corte 6.mp4 no modelo 4 — Ciro @siqueira.ciro","Editar corte 7.mp4 no modelo 3"],
+  "Roger":["Como foi a última semana no Instagram?","Qual corte virar carrossel esta semana?","Fazer a revisão do mês com a apresentação"],
   "Cortes CowTalk":["Achar os melhores cortes do episódio novo"], "Briefing de Carrossel":["Briefing de carrossel a partir do corte 5"],
   "Carrossel Tweet":["Carrossel tweet sobre vaca tranquila na ordenha"], "Modelo 1 · Motion":["Editar corte 7.mp4"], "Modelo 3 · Ritmo":["Editar corte 8.mp4"],
   "Modelo 4 · Tipográfico":["Editar corte 9.mp4"], "Transcrição":["Transcrever corte 7.mp4"], "Plano de Edição":["Plano de edição do corte 7"],
@@ -961,7 +1003,8 @@ function renderCard(){
     <textarea id="ask" rows="3" placeholder="${local ? "Ex.: " + esc(ideas[0] || "") : "Escreva o pedido…"}"></textarea>
     ${ideas.length ? `<div class="sugs">${ideas.map(i => `<button data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>` : ""}
     ${BOTH.has(a.n) ? `<div class="row"><button class="btn primary" id="send">Responder agora</button><button class="btn" id="sendQ">💻 Fazer no Mac</button></div>
-    <p class="small"><b>Responder agora:</b> a resposta chega aqui, como conselho ou trecho de código. <b>Fazer no Mac:</b> o pedido entra na fila e o robô mexe de verdade nos seus projetos, num branch separado, sem apagar nada nem publicar.</p>`
+    ${a.n === "Roger" ? `<button class="btn" id="rogerIg">📊 Abrir o painel do Instagram</button>
+    <p class="small"><b>Responder agora:</b> o Roger lê os números do Instagram ao vivo e responde aqui. <b>Fazer no Mac:</b> a revisão completa do mês: atualiza a estratégia e as regras e monta a apresentação para os CEOs.</p>` : `<p class="small"><b>Responder agora:</b> a resposta chega aqui, como conselho ou trecho de código. <b>Fazer no Mac:</b> o pedido entra na fila e o robô mexe de verdade nos seus projetos, num branch separado, sem apagar nada nem publicar.</p>`}`
     : `<button class="btn primary" id="send">${local ? "Anotar na fila" : "Pedir para " + esc(a.n.split(" ")[0])}</button>
     <p class="small">${local ? "Este agente trabalha com os arquivos do seu Mac: o pedido entra na fila e o robô da torre executa sozinho." : "A resposta chega aqui mesmo, escrita pelo Claude no papel deste agente."}</p>`}
     `}<div class="out" id="out" hidden></div>
@@ -976,6 +1019,7 @@ function renderCard(){
     </details>`;
   c.hidden = false;
 }
+document.addEventListener("click", e => { if (e.target.closest("#rogerIg")) igAbrir(); });
 function select(k){
   if ($("#card").contains(document.activeElement)) document.activeElement.blur();
   document.querySelectorAll(".sp.sel").forEach(x => x.classList.remove("sel"));
@@ -984,6 +1028,41 @@ function select(k){
   selK = k; mode = k == null ? null : "req";
   if (k == null){ $("#card").hidden = true; return; }
   AG[k].el.classList.add("sel"); renderCard();
+}
+/* ---------- Roger: estratégia com os números ao vivo ---------- */
+const ROGER_REGRAS = `Diagnóstico de 02/11/2026 (posts de 04/08 a 01/11): visualizações por dia caíram de 17.401 (ago) para 10.646 (set) e 4.878 (out); alcance diário em quem não segue caiu de 6.486 para 1.790. Segunda quinzena de outubro já melhorou (6.212/dia contra 3.627).
+O que funciona: saúde e clínica é o melhor tema (mediana 2.434 visualizações, 5 compartilhamentos); genética só com virada de chave; dinheiro, gestão, mercado e tecnologia são os piores temas. Ganchos que contrariam o senso comum ou criam uma imagem forte vencem; pergunta genérica na primeira linha rende 19% menos. Carrossel (mediana 2.663) e foto (3.055) rendem mais que reel (1.664) e quase não são usados. Marcar o convidado com @ ajuda.
+Plano: clínica em 1 de cada 3 posts; todo corte abre com a frase de virada; 2 carrosséis por semana reaproveitando os melhores reels; convidado sempre com @ e collab; série semanal "Mito ou verdade?"; dinheiro no máximo 1 por semana e com número no gancho; testar reels entre 9h–12h e 21h–23h.
+Metas de dezembro: 8.000 visualizações por dia; 3.000 de alcance por dia em quem não segue; mediana de 3 compartilhamentos por reel; 8 carrosséis no mês.`;
+async function rogerDados(){
+  const faltam = ["dias", "posts", "perfil"].filter(n => !IG[n]);
+  await Promise.all(faltam.map(n => igBuscar(n)));
+  if (!IG.dias && !IG.posts) return "";
+  const dias = (IG.dias || []).filter(r => r.views != null), soma = (rs, k) => rs.reduce((t, r) => t + (r[k] || 0), 0);
+  const ult = (n, desl = 0) => dias.slice(Math.max(0, dias.length - n - desl), dias.length - desl);
+  const bloco = (rot, rs) => rs.length ? `${rot} (${rs[0].date} a ${rs.at(-1).date}): ${fmt(soma(rs, "views") / rs.length)} visualizações/dia, ${fmt(soma(rs, "reach") / rs.length)} de alcance/dia, ${fmt(soma(rs, "shares"))} compartilhamentos, ${fmt(soma(rs, "saves"))} salvamentos` : "";
+  const meses = {}; dias.forEach(r => (meses[r.date.slice(0, 7)] ||= []).push(r));
+  const top = [...(IG.posts || [])].sort((x, y) => (y.media_views || 0) - (x.media_views || 0));
+  const linha = r => `- ${r.date} · ${IG_TIPO[r.media_type] || r.media_type} · ${fmt(r.media_views)} visualiz. · ${fmt(r.media_shares)} compart. · ${fmt(r.media_saved)} salv. · "${((r.media_caption || "").split("\n").find(l => l.trim()) || "").slice(0, 140)}"`;
+  const p = IG.perfil?.[0];
+  return [p ? `Perfil: @${p.username}, ${fmt(p.followers_count)} seguidores, ${fmt(p.media_count)} publicações.` : "",
+    bloco("Últimos 7 dias fechados", ult(7)), bloco("7 dias anteriores", ult(7, 7)), bloco("Últimos 30 dias fechados", ult(30)),
+    "Por mês: " + Object.entries(meses).slice(-6).map(([m, rs]) => `${m}: ${fmt(soma(rs, "views") / rs.length)} visualiz./dia em ${rs.length} dias`).join("; "),
+    top.length ? `Posts dos últimos 30 dias (${top.length}), os 8 mais vistos:\n${top.slice(0, 8).map(linha).join("\n")}\nOs 3 menos vistos:\n${top.slice(-3).map(linha).join("\n")}` : ""].filter(Boolean).join("\n");
+}
+function rogerPrompt(text, dados){
+  return `Você é Roger, estrategista de redes sociais do CowTalk, podcast brasileiro sobre pecuária leiteira da Matrix Code. Fala como um consultor experiente: direto, com números, sem jargão.
+
+Estratégia em vigor:
+${ROGER_REGRAS}
+
+Números ao vivo do Instagram (puxados agora; o dia de hoje ainda não fechou):
+${dados}
+
+Pergunta do dono da Matrix Code:
+${text}
+
+Responda em português do Brasil, em no máximo 180 palavras. Use só os números acima; se faltar um dado para responder, diga qual. Termine com uma ação concreta para esta semana.`;
 }
 async function send(toQueue){
   const a = AG[selK], text = $("#ask").value.trim(); if (!a || !text){ $("#ask").focus(); return; }
@@ -1002,7 +1081,9 @@ async function send(toQueue){
   out.textContent = "Pensando…";
   ctl = new AbortController(); const myCtl = ctl;
   const pulse = setInterval(() => bubble(a, pick(["Trabalhando nisso…","Quase lá","Escrevendo…"])), 3200);
-  const prompt = `Você é ${a.n}, agente da Matrix Code, empresa de tecnologia que também cuida do CowTalk, um podcast brasileiro sobre pecuária leiteira. Sua especialidade: ${a.v}\n\nPedido do dono da Matrix Code:\n${text}\n\nResponda em português do Brasil, direto e pronto para usar, em no máximo 300 palavras. Use listas curtas com "-" quando ajudar. Se mostrar código, mande só o trecho necessário. Sem markdown pesado.`;
+  if (a.n === "Roger") out.textContent = "Lendo os números do Instagram…";
+  const dados = a.n === "Roger" ? await rogerDados() : "";
+  const prompt = dados ? rogerPrompt(text, dados) : `Você é ${a.n}, agente da Matrix Code, empresa de tecnologia que também cuida do CowTalk, um podcast brasileiro sobre pecuária leiteira. Sua especialidade: ${a.v}\n\nPedido do dono da Matrix Code:\n${text}\n\nResponda em português do Brasil, direto e pronto para usar, em no máximo 300 palavras. Use listas curtas com "-" quando ajudar. Se mostrar código, mande só o trecho necessário. Sem markdown pesado.`;
   try {
     const r = await sampleFn(prompt, {cache:false, signal:myCtl.signal, onText:({text:t}) => { if (ctl === myCtl) out.textContent = t; }});
     if (ctl === myCtl) out.textContent = r.text;
@@ -1318,7 +1399,7 @@ const VOZ = {on:false, rec:null, wait:null, waitT:0, speaking:false};
 const norm = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const vozMsg = t => $("#vozMsg").textContent = t;
 /* como o reconhecimento de voz costuma escrever cada nome */
-const APELIDOS = {"Xanax":["chanax","shanax","xanaxe","xanex","xenax","zanax","xanacs","chanacs","shanaks","xanaks"], "Patrick Jane":["patric","patrique","patriq","patrik"], "Helena":["elena","helen","lena"]};
+const APELIDOS = {"Xanax":["chanax","shanax","xanaxe","xanex","xenax","zanax","xanacs","chanacs","shanaks","xanaks"], "Patrick Jane":["patric","patrique","patriq","patrik"], "Helena":["elena","helen","lena"], "Roger":["rogi","rojer","rodger","hoger","roge","rogê","rogers"]};
 function falar(a, txt){
   txt = String(txt || "").replace(/\p{Extended_Pictographic}/gu, "").replace(/\s+/g, " ").trim();
   if (!("speechSynthesis" in window) || !txt) return Promise.resolve();
@@ -1348,7 +1429,9 @@ async function ordem(txt){
     await falar(a, pick(["Oi! Pode falar.", "Sim, chefe?", "Tô ouvindo."])); return true;
   }
   vozMsg(`${a.n}: “${rest}”`); bubble(a, "Entendido!");
-  if (typeof PUBLIC !== "undefined"){ await window.ORDEM_SITE?.(a, rest); return true; }
+  if (typeof PUBLIC !== "undefined"){
+    if (a.n === "Roger"){ await falar(a, "Por enquanto eu atendo só no escritório do Claude, onde vejo os números do Instagram."); return true; }
+    await window.ORDEM_SITE?.(a, rest); return true; }
   await falar(a, a === SEC ? "Entendido, já anoto." : "Entendido, vou fazer.");
   if (a === SEC){
     if (/relat|resum/.test(norm(rest))) await sumNow();
@@ -1371,7 +1454,7 @@ function ouvir(on){
     for (let i = e.resultIndex; i < e.results.length; i++){
       if (!e.results[i].isFinal || VOZ.speaking) continue;
       const t = e.results[i][0].transcript; $("#vozIn").value = t;
-      ordem(t).then(ok => { if (!ok) vozMsg(`Ouvi “${t}”. Comece pelo nome: Patrick, Xanax ou Helena.`); });
+      ordem(t).then(ok => { if (!ok) vozMsg(`Ouvi “${t}”. Comece pelo nome: Patrick, Xanax, Roger ou Helena.`); });
     }
   };
   r.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture"){ ouvir(false); VOZ.blocked = true; ditado(); } };
@@ -1385,16 +1468,17 @@ function ditado(){
 $("#vozBtn").addEventListener("click", () => { if ("speechSynthesis" in window) speechSynthesis.getVoices(); if (VOZ.blocked) return ditado(); ouvir(!VOZ.on); });
 $("#voz").addEventListener("submit", async e => {
   e.preventDefault(); const inp = $("#vozIn"), t = inp.value; inp.value = "";
-  if (!(await ordem(t))) vozMsg("Comece pelo nome do agente: Patrick, Xanax ou Helena.");
+  if (!(await ordem(t))) vozMsg("Comece pelo nome do agente: Patrick, Xanax, Roger ou Helena.");
 });
 if (typeof PUBLIC !== "undefined"){ $("#voz").hidden = true; $("#vozMsg").hidden = true; }
 
 /* painel do Instagram (Windsor.ai): números do dia, da semana e do mês */
-const IG = {modo:"dia", dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
+const IG = {modo:"dia", linha:"views", top:"media_views", posts:null, dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
 const IG_Q = {
   dias:{connector:"instagram", fields:["date","reach","views","accounts_engaged","total_interactions","likes","comments","shares","saves"], date_preset:"last_180dT"},
   seg:{connector:"instagram", fields:["date","follower_count_1d"], date_preset:"last_30d"},
-  perfil:{connector:"instagram", fields:["username","followers_count","media_count"]}
+  perfil:{connector:"instagram", fields:["username","followers_count","media_count"]},
+  posts:{connector:"instagram", fields:["date","media_type","media_caption","media_permalink","media_views","media_shares","media_saved"], date_preset:"last_30d"}
 };
 const IG_CACHE = {staleTime:600000, gcTime:3600000};
 const IG_M = [["views","Visualizações"],["reach","Alcance"],["accounts_engaged","Contas engajadas"],["total_interactions","Interações"],["likes","Curtidas"],["comments","Comentários"],["shares","Compartilhamentos"],["saves","Salvamentos"],["novos","Novos seguidores"]];
@@ -1421,14 +1505,93 @@ function igPeriodos(){
     return o;
   }).slice(IG.modo === "sem" ? -13 : -6);
 }
+const IG_L = [["views","Visualizações"],["reach","Alcance"],["accounts_engaged","Contas engajadas"],["total_interactions","Interações"],["likes","Curtidas"],["shares","Compartilhamentos"],["saves","Salvamentos"]];
+// dia a dia dentro do período fechado mais recente, lado a lado com o período anterior de mesmo tamanho
+function igComparar(){
+  const dias = (IG.dias || []).filter(r => r.views != null); if (!dias.length) return null;
+  const por = new Map(dias.map(r => [r.date, r])), iso = d => d.toISOString().slice(0, 10);
+  const soma = (d, n) => { const x = dtx(d); x.setDate(x.getDate() + n); return iso(x); };
+  const ult = dias.at(-1).date; let at, an, rot, nomes;
+  if (IG.modo === "dia"){
+    const ini = soma(ult, -29); at = Array.from({length:30}, (_, i) => soma(ini, i)); an = at.map(d => soma(d, -30));
+    rot = at.map(d => dtx(d).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"})); nomes = ["Últimos 30 dias", "30 dias antes"];
+  } else if (IG.modo === "sem"){
+    let seg = semanaDe(ult); if (soma(seg, 6) > ult) seg = soma(seg, -7);
+    at = Array.from({length:7}, (_, i) => soma(seg, i)); an = at.map(d => soma(d, -7));
+    rot = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]; nomes = ["Semana de " + dtx(seg).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}), "Semana anterior"];
+  } else {
+    const fimMes = k => { const [y, m] = k.split("-").map(Number); return iso(new Date(y, m, 0, 12)); };
+    let k = ult.slice(0, 7); if (fimMes(k) > ult){ const x = dtx(k + "-01"); x.setMonth(x.getMonth() - 1); k = iso(x).slice(0, 7); }
+    const x = dtx(k + "-01"); x.setMonth(x.getMonth() - 1); const kp = iso(x).slice(0, 7);
+    const n = Math.max(+fimMes(k).slice(8), +fimMes(kp).slice(8));
+    at = Array.from({length:n}, (_, i) => `${k}-${String(i + 1).padStart(2, "0")}`); an = Array.from({length:n}, (_, i) => `${kp}-${String(i + 1).padStart(2, "0")}`);
+    rot = at.map((_, i) => "dia " + (i + 1)); const mn = q => dtx(q + "-01").toLocaleDateString("pt-BR", {month:"long"});
+    nomes = [mn(k)[0].toUpperCase() + mn(k).slice(1), mn(kp)[0].toUpperCase() + mn(kp).slice(1)];
+  }
+  const m = IG.linha, v = ds => ds.map(d => por.get(d)?.[m] ?? null);
+  return {rot, at:v(at), an:v(an), dAt:at, dAn:an, nomes};
+}
+function igLinhasSvg(c){
+  const W_ = 1000, H_ = 220, L = 52, R = 10, T = 10, B = 24, n = c.rot.length;
+  const todos = [...c.at, ...c.an].filter(x => x != null), mx = Math.max(...todos, 1);
+  const passo = 10 ** Math.floor(Math.log10(mx)), topo = Math.ceil(mx / passo) * passo;
+  const X = i => L + (n === 1 ? 0 : i * (W_ - L - R) / (n - 1)), Y = y => T + (H_ - T - B) * (1 - y / topo);
+  const caminho = vs => { let d = "", on = false; vs.forEach((y, i) => { if (y == null){ on = false; return; } d += (on ? "L" : "M") + X(i).toFixed(1) + " " + Y(y).toFixed(1); on = true; }); return d; };
+  const grade = [0, .25, .5, .75, 1].map(f => `<line class="grid" x1="${L}" x2="${W_ - R}" y1="${Y(topo * f)}" y2="${Y(topo * f)}"/><text x="${L - 6}" y="${Y(topo * f) + 3}" text-anchor="end">${fmt(topo * f)}</text>`).join("");
+  const cada = n > 15 ? Math.ceil(n / 8) : 1;
+  const eixo = c.rot.map((r, i) => i % cada === 0 || i === n - 1 ? `<text x="${X(i)}" y="${H_ - 6}" text-anchor="middle">${esc(r)}</text>` : "").join("");
+  return `<svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de linhas: ${esc(c.nomes[0])} comparado com ${esc(c.nomes[1])}">${grade}${eixo}
+    <path class="l-an" d="${caminho(c.an)}"/><path class="l-at" d="${caminho(c.at)}"/>
+    <g class="hov" visibility="hidden"><line class="cross" y1="${T}" y2="${H_ - B}"/><circle class="dot-an" r="4.5"/><circle class="dot-at" r="4.5"/></g>
+    <rect class="hit" x="${L}" y="0" width="${W_ - L - R}" height="${H_}" fill="transparent"/></svg>`;
+}
+function igLinhasHover(c){
+  const box = $("#igCmp"), svg = box?.querySelector("svg"), tip = $("#igTip"); if (!svg) return;
+  const W_ = 1000, H_ = 220, L = 52, R = 10, T = 10, B = 24, n = c.rot.length;
+  const mx = Math.max(...[...c.at, ...c.an].filter(x => x != null), 1), passo = 10 ** Math.floor(Math.log10(mx)), topo = Math.ceil(mx / passo) * passo;
+  const X = i => L + (n === 1 ? 0 : i * (W_ - L - R) / (n - 1)), Y = y => T + (H_ - T - B) * (1 - y / topo);
+  const g = svg.querySelector(".hov"), [dan, dat] = [g.querySelector(".dot-an"), g.querySelector(".dot-at")], cr = g.querySelector(".cross");
+  const dataTxt = d => dtx(d).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"});
+  const mover = ev => {
+    const r = svg.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width * W_;
+    const i = Math.max(0, Math.min(n - 1, Math.round((x - L) / ((W_ - L - R) / Math.max(n - 1, 1)))));
+    g.setAttribute("visibility", "visible"); cr.setAttribute("x1", X(i)); cr.setAttribute("x2", X(i));
+    for (const [el, y] of [[dat, c.at[i]], [dan, c.an[i]]]){ el.setAttribute("visibility", y == null ? "hidden" : "visible"); if (y != null){ el.setAttribute("cx", X(i)); el.setAttribute("cy", Y(y)); } }
+    const a = c.at[i], b = c.an[i], d = a != null && b ? (a - b) / b * 100 : null;
+    tip.innerHTML = `<div><b>${fmt(a)}</b> · ${esc(dataTxt(c.dAt[i]))}</div><div style="color:var(--muted)">${fmt(b)} · ${esc(dataTxt(c.dAn[i]))}</div>${d == null ? "" : `<div class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}%</div>`}`;
+    tip.hidden = false; const bx = box.getBoundingClientRect(), px = X(i) / W_ * r.width + (r.left - bx.left);
+    tip.style.left = Math.min(Math.max(px + 12, 0), bx.width - tip.offsetWidth) + "px"; tip.style.top = "40px";
+  };
+  svg.addEventListener("pointermove", mover); svg.addEventListener("pointerleave", () => { g.setAttribute("visibility", "hidden"); tip.hidden = true; });
+}
+const IG_TOP = [["media_views","Visualizações"],["media_shares","Compartilhamentos"],["media_saved","Salvamentos"]];
+const IG_TIPO = {REELS:"Reel", CAROUSEL_ALBUM:"Carrossel", IMAGE:"Foto", VIDEO:"Vídeo"};
+function igTopHtml(){
+  const ps = (IG.posts || []).filter(r => r.media_permalink); if (!ps.length) return "";
+  const k = IG.top, med = (() => { const v = ps.map(r => r[k] || 0).sort((a, b) => a - b); return v[Math.floor(v.length / 2)]; })();
+  const lista = [...ps].sort((a, b) => (b[k] || 0) - (a[k] || 0)).slice(0, 8).map((r, i) => {
+    const cap = (r.media_caption || "").split("\n").find(l => l.trim()) || "(sem legenda)";
+    const n = (m, rot) => `<span><b class="${m === k ? "on" : ""}">${fmt(r[m])}</b> ${rot}</span>`;
+    const link = /^https:\/\/(www\.)?instagram\.com\//.test(r.media_permalink) ? ` · <a href="${esc(r.media_permalink)}" target="_blank" rel="noopener">abrir ↗</a>` : "";
+    return `<li><span class="pos">${i + 1}</span><div class="cap"><p title="${esc(cap)}">${esc(cap)}</p><small>${esc(dtx(r.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}))} · ${esc(IG_TIPO[r.media_type] || r.media_type || "")}${(r[k] || 0) >= 2 * med && med > 0 ? " · 🔥 " + ((r[k] || 0) / med).toFixed(1).replace(".", ",") + "× a mediana" : ""}${link}</small></div><div class="nums">${n("media_views", "visualiz.")}${n("media_shares", "compart.")}${n("media_saved", "salv.")}</div></li>`;
+  }).join("");
+  return `<div class="top"><div class="cmp-top"><h3>Melhores posts dos últimos 30 dias</h3><div class="chips" role="group" aria-label="Ordenar posts por">${IG_TOP.map(([m, r]) => `<button data-igt="${m}" aria-pressed="${m === k}">${r}</button>`).join("")}</div></div><ol>${lista}</ol>
+    <p class="nota">${fmt(ps.length)} posts no período · mediana de ${fmt(med)} ${IG_TOP.find(([m]) => m === k)[1].toLowerCase()} por post. Posts novos ainda estão juntando números.</p></div>`;
+}
 function igRender(){
   const body = $("#igBody"), hero = $("#igHero");
   const p = IG.perfil?.[0], novos30 = (IG.seg || []).reduce((t, r) => t + (r.follower_count_1d || 0), 0);
-  hero.innerHTML = p ? `<div><b>${fmt(p.followers_count)}</b><span>seguidores agora</span></div><div><b>+${fmt(novos30)}</b><span>novos seguidores nos últimos 30 dias</span></div><div><b>${fmt(p.media_count)}</b><span>publicações</span></div>` : "";
-  if (p){ $("#igSub").textContent = "@" + p.username; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
+  if (p){ $("#igSub").textContent = `@${p.username} · ${fmt(p.media_count)} publicações`; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
   $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + " · atualiza sozinho a cada 10 min" : "";
-  const ps = igPeriodos(); if (!ps.length){ if (IG.dias) body.innerHTML = `<p class="msg">Ainda não há números para mostrar.</p>`; return; }
+  const ps = igPeriodos();
   const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2);
+  // os novos seguidores só existem para os últimos 30 dias: um mês que começa antes disso sairia contado pela metade
+  const iniSeg = (IG.seg || []).map(r => r.date).sort()[0], mesInteiro = IG.modo !== "mes" || (cur && iniSeg && iniSeg <= cur.k + "-01");
+  const quando = {dia:"ontem", sem:"na última semana fechada", mes:"no último mês fechado"}[IG.modo];
+  const novosH = mesInteiro ? [cur?.novos, `novos seguidores ${quando}`] : [novos30, "novos seguidores nos últimos 30 dias (o Instagram só guarda 30 dias)"];
+  const sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
+  hero.innerHTML = p ? `<div><b>${fmt(p.followers_count)}</b><span>seguidores agora</span></div><div><b>${sinal(novosH[0])}</b><span>${novosH[1]}</span></div><div><b>${fmt(cur?.views)}</b><span>visualizações ${quando}${cur ? ` (${esc(cur.rot)})` : ""}</span></div>` : "";
+  if (!ps.length){ if (IG.dias) body.innerHTML = `<p class="msg">Ainda não há números para mostrar.</p>`; return; }
   const nome = {dia:["Ontem","anteontem"], sem:["Última semana fechada","a semana anterior"], mes:["Último mês fechado","o mês anterior"]}[IG.modo];
   const val = (o, m) => m === "reach" && IG.modo !== "dia" ? o?.reachMed : o?.[m];
   const kpis = IG_M.map(([m, rot]) => {
@@ -1438,10 +1601,20 @@ function igRender(){
   const W_ = 1000, H_ = 180, bw = W_ / ps.length, mx = Math.max(...ps.map(x => x.views || 0), 1);
   const bars = ps.map((x, i) => { const h = (x.views || 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - h}" width="${bw * .7}" height="${Math.max(h, 1)}" rx="3"><title>${esc(x.rot)}: ${fmt(x.views)} visualizações${x.parcial ? " (parcial)" : ""}</title></rect>${ps.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto || x.rot)}</text>` : ""}</g>`; }).join("");
   const linhas = [...ps].reverse().map(x => `<tr><td>${esc(x.rot)}${x.parcial ? " · parcial" : ""}</td>${IG_M.map(([m]) => `<td>${fmt(val(x, m))}</td>`).join("")}</tr>`).join("");
+  const c = igComparar(), media = IG.linha === "reach", tot = vs => { const ok = vs.filter(x => x != null); return ok.length ? ok.reduce((t, x) => t + x, 0) / (media ? ok.length : 1) : null; };
+  const tA = c && tot(c.at), tB = c && tot(c.an), dT = tA != null && tB ? (tA - tB) / tB * 100 : null, rotL = IG_L.find(([m]) => m === IG.linha)[1];
+  const cmpHtml = c ? `<div class="chart"><div class="cmp-top"><h3>Comparar: ${esc(rotL)} dia a dia</h3><div class="chips" role="group" aria-label="Número do gráfico de linhas">${IG_L.map(([m, r]) => `<button data-igl="${m}" aria-pressed="${m === IG.linha}">${r}</button>`).join("")}</div></div>
+    <div class="leg"><span><i></i>${esc(c.nomes[0])}${media ? " (média/dia)" : ""}: <b>${fmt(tA)}</b></span><span><i class="ant"></i>${esc(c.nomes[1])}${media ? " (média/dia)" : ""}: <b>${fmt(tB)}</b></span>${dT == null ? "" : `<span class="${dT >= 0 ? "up" : "down"}">${dT >= 0 ? "▲" : "▼"} ${Math.abs(dT).toFixed(0)}% ${media ? "na média por dia" : "no total"}</span>`}</div>
+    <div class="cmp" id="igCmp">${igLinhasSvg(c)}<div class="tip" id="igTip" hidden></div></div></div>` : "";
   body.innerHTML = `<p class="sub" style="margin:0 0 8px">${nome[0]}${cur ? ` (${esc(cur.rot)})` : ""}, comparado com ${nome[1]}. O Instagram fecha os números de cada dia só no dia seguinte.</p>
     <div class="kpis">${kpis}</div>
+    ${cmpHtml}
     <div class="chart"><h3>Visualizações por ${IG.modo === "dia" ? "dia" : IG.modo === "sem" ? "semana" : "mês"}</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações">${bars}</svg></div>
+    ${igTopHtml()}
     <div class="tbl"><h3>Todos os números</h3><table><thead><tr><th>${IG.modo === "dia" ? "Dia" : IG.modo === "sem" ? "Semana" : "Mês"}</th>${IG_M.map(([m, r]) => `<th>${r}${m === "reach" && IG.modo !== "dia" ? " /dia" : ""}</th>`).join("")}</tr></thead><tbody>${linhas}</tbody></table></div>`;
+  if (c) igLinhasHover(c);
+  body.querySelectorAll("[data-igt]").forEach(b => b.addEventListener("click", () => { IG.top = b.dataset.igt; igRender(); }));
+  body.querySelectorAll("[data-igl]").forEach(b => b.addEventListener("click", () => { IG.linha = b.dataset.igl; igRender(); }));
 }
 function igErro(e){
   const c = e?.code, msg = c === "not_in_manifest" || c === "not_granted" ? "O Windsor.ai não foi liberado para esta página. Abra o menu de permissões da página e libere." :
@@ -1464,7 +1637,7 @@ async function igAbrir(){
   const mcp = await window.claude?.use?.("mcp");
   if (!mcp){ $("#igBody").innerHTML = `<p class="msg">O painel do Instagram só funciona com a página aberta pelo claude.ai, com o conector Windsor.ai.</p>`; return; }
   await igBuscar("perfil");
-  for (const nome of ["dias", "seg", "perfil"]){
+  for (const nome of ["dias", "seg", "perfil", "posts"]){
     IG.watches.push(mcp.watchTool("Windsor.ai", "get_data", IG_Q[nome], ev => ev.type === "data" ? igRecebe(nome, ev.result) : igErro(ev.error), {cache:IG_CACHE, refetchInterval:600000}));
   }
 }
