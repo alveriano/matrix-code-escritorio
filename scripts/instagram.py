@@ -18,8 +18,15 @@ CONSULTAS = {
 }
 
 
+def chave_windsor():
+    chave = os.environ["WINDSOR_API_KEY"].strip()
+    if "api_key=" in chave:  # aceita o endereço inteiro copiado do Data Preview do Windsor
+        chave = urllib.parse.parse_qs(urllib.parse.urlsplit(chave).query).get("api_key", [""])[0]
+    return chave
+
+
 def windsor(consulta):
-    q = urllib.parse.urlencode({"api_key": os.environ["WINDSOR_API_KEY"], **consulta})
+    q = urllib.parse.urlencode({"api_key": chave_windsor(), **consulta})
     with urllib.request.urlopen("https://connectors.windsor.ai/instagram?" + q, timeout=120) as r:
         corpo = json.load(r)
     linhas = corpo.get("data", corpo) if isinstance(corpo, dict) else corpo
