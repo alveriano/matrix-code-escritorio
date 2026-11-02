@@ -57,7 +57,11 @@ for nome, consulta in CONSULTAS.items():
         print(f"{nome}: {len(linhas)} linhas gravadas")
     except urllib.error.HTTPError as e:
         falhas += 1
-        print(f"{nome}: erro HTTP {e.code} em {e.url.split('?')[0]}")
+        msg = e.read()[:200].decode(errors="replace")
+        for segredo in (chave_windsor(), os.environ.get("IG_TOKEN", "")):
+            if segredo:
+                msg = msg.replace(segredo, "***")
+        print(f"{nome}: erro HTTP {e.code} em {e.url.split('?')[0]}: {msg}")
     except Exception as e:
         falhas += 1
         print(f"{nome}: falhou ({type(e).__name__})")
