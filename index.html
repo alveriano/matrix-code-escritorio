@@ -210,6 +210,37 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .sp.other .nm{opacity:1;background:#2F6FD6}
 .pill.online{display:inline-flex;align-items:center;cursor:default}
 .chatbar{max-width:1560px;margin:8px auto 0;display:flex;gap:8px}
+.ig{position:fixed;inset:0;z-index:40;display:flex;overflow:auto;padding:16px;background:rgba(4,10,7,.6);backdrop-filter:blur(4px)}
+.ig .box{margin:auto;width:min(1080px,100%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:16px;box-shadow:0 24px 70px rgba(0,0,0,.4)}
+.ig header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+.ig h2{margin:0;font-family:var(--f-display);font-weight:900;font-size:34px;line-height:.95;text-transform:uppercase}
+.ig .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+.ig .x{position:static;flex:0 0 34px;border:1px solid var(--line);background:var(--bg);border-radius:999px;width:34px;height:34px;font-size:18px;line-height:1}
+.ig .hero{display:flex;flex-wrap:wrap;gap:12px}
+.ig .hero div{flex:1 1 180px;padding:12px 14px;border-radius:12px;background:var(--bg)}
+.ig .hero b{display:block;font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.ig .hero span{font-size:12px;color:var(--muted)}
+.ig .tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ig .tabs button{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent}
+.ig .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ig .tabs .when{margin-left:auto;font-size:12px;color:var(--muted)}
+.ig .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ig .kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ig .kpi span{font-size:12px;color:var(--muted)}
+.ig .kpi b{display:block;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;margin:2px 0}
+.ig .kpi i{font-style:normal;font-size:12px;font-variant-numeric:tabular-nums}
+.ig .up{color:var(--accent)} .ig .down{color:#E5484D}
+.ig .chart{border:1px solid var(--line);border-radius:12px;padding:12px 12px 6px}
+.ig .chart h3,.ig .tbl h3{margin:0 0 8px;font-size:13px;font-weight:600}
+.ig .chart svg{display:block;width:100%;height:auto;overflow:visible}
+.ig .chart .bar{fill:var(--accent);opacity:.85} .ig .chart .bar.part{opacity:.4} .ig .chart .bar:hover{opacity:1}
+.ig .chart text{font-size:10px;fill:var(--muted);font-family:var(--f-mono)}
+.ig .tbl{overflow:auto}
+.ig table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.ig th,.ig td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.ig th:first-child,.ig td:first-child{text-align:left}
+.ig th{font-weight:600;color:var(--muted);font-size:12px}
+.ig .msg{padding:14px;border-radius:12px;background:var(--bg);color:var(--muted)}
 .vozbar #vozBtn[aria-pressed="true"]{background:#DC2626;border-color:#DC2626;color:#fff;animation:vozpulse 1.4s ease-in-out infinite}
 @keyframes vozpulse{50%{box-shadow:0 0 0 6px rgba(220,38,38,.25)}}
 .vozmsg{max-width:1560px;margin:4px auto 0;padding:0 14px;font-size:13px;color:var(--muted);min-height:18px}
@@ -295,6 +326,7 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
   </div>
   <div class="controls">
     <span class="pill online" id="online" hidden>🟢 1 online</span>
+    <button class="pill" id="igBtn">📊 Instagram</button>
     <button class="pill" id="czBtn">🎨 Personalizar</button>
         <button class="pill" id="roam" aria-pressed="false" title="Quando desligado, os agentes ficam nas mesas e só saem quando você mandar">🚶 Deixar andar</button>
     <button class="pill" id="pause" aria-pressed="false">⏸ Pausar</button>
@@ -308,6 +340,12 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 <form class="chatbar" id="chat" hidden autocomplete="off"><input id="chatIn" maxlength="140" placeholder="💬 Fale com quem está na sala… (Enter envia)" aria-label="Mensagem para quem está na sala"><button class="btn primary">Enviar</button></form>
 <form class="chatbar vozbar" id="voz" autocomplete="off"><button type="button" class="btn" id="vozBtn" aria-pressed="false">🎙️ Falar com os agentes</button><input id="vozIn" maxlength="300" placeholder="Ou escreva: “Xanax, crie um script que…”" aria-label="Ordem para um agente, começando pelo nome dele"><button class="btn primary">Mandar</button></form>
 <p class="vozmsg" id="vozMsg" role="status"></p>
+<section class="ig" id="ig" hidden aria-labelledby="igTitle"><div class="box">
+  <header><div><h2 id="igTitle">Instagram</h2><p class="sub" id="igSub">@cowtalk.podcast</p></div><button class="x" id="igX" aria-label="Fechar painel do Instagram">×</button></header>
+  <div class="hero" id="igHero"></div>
+  <div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button id="igRef">↻ Atualizar</button><span class="when" id="igWhen"></span></div>
+  <div id="igBody"><p class="msg">Buscando os números do Instagram…</p></div>
+</div></section>
 <p class="hint">Teclado: setas ou WASD andam · Enter abre o agente perto de você · Esc fecha. Clique no chão para ir até lá. No celular, use os botões no canto.</p>
 
 <aside class="card" id="card" hidden></aside>
@@ -1350,6 +1388,93 @@ $("#voz").addEventListener("submit", async e => {
   if (!(await ordem(t))) vozMsg("Comece pelo nome do agente: Patrick, Xanax ou Helena.");
 });
 if (typeof PUBLIC !== "undefined"){ $("#voz").hidden = true; $("#vozMsg").hidden = true; }
+
+/* painel do Instagram (Windsor.ai): números do dia, da semana e do mês */
+const IG = {modo:"dia", dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
+const IG_Q = {
+  dias:{connector:"instagram", fields:["date","reach","views","accounts_engaged","total_interactions","likes","comments","shares","saves"], date_preset:"last_180dT"},
+  seg:{connector:"instagram", fields:["date","follower_count_1d"], date_preset:"last_30d"},
+  perfil:{connector:"instagram", fields:["username","followers_count","media_count"]}
+};
+const IG_CACHE = {staleTime:600000, gcTime:3600000};
+const IG_M = [["views","Visualizações"],["reach","Alcance"],["accounts_engaged","Contas engajadas"],["total_interactions","Interações"],["likes","Curtidas"],["comments","Comentários"],["shares","Compartilhamentos"],["saves","Salvamentos"],["novos","Novos seguidores"]];
+const fmt = n => n == null || isNaN(n) ? "—" : Math.round(n).toLocaleString("pt-BR");
+const dtx = d => new Date(d + "T12:00");
+function semanaDe(d){ const x = dtx(d), wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x.toISOString().slice(0, 10); }
+function igPeriodos(){
+  if (!IG.dias) return [];
+  const novos = {}; (IG.seg || []).forEach(r => novos[r.date] = r.follower_count_1d);
+  const dias = IG.dias.filter(r => r.views != null).map(r => ({...r, novos:novos[r.date]}));
+  if (IG.modo === "dia") return dias.slice(-30).map(r => ({k:r.date, rot:dtx(r.date).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"}), curto:dtx(r.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}), n:1, parcial:false, ...r, reachMed:r.reach}));
+  const key = IG.modo === "sem" ? r => semanaDe(r.date) : r => r.date.slice(0, 7), g = new Map();
+  for (const r of dias){
+    const k = key(r); if (!g.has(k)) g.set(k, {k, n:0, novos:null});
+    const o = g.get(k); o.n++;
+    for (const [m] of IG_M) if (m !== "novos" && r[m] != null) o[m] = (o[m] || 0) + r[m];
+    if (r.novos != null) o.novos = (o.novos || 0) + r.novos;
+  }
+  const ontem = new Date(); ontem.setDate(ontem.getDate() - 1); const oy = ontem.toISOString().slice(0, 10);
+  return [...g.values()].map(o => {
+    o.reachMed = o.reach / o.n;
+    if (IG.modo === "sem"){ const f = dtx(o.k); f.setDate(f.getDate() + 6); o.parcial = f.toISOString().slice(0, 10) > oy; o.rot = "Sem. " + dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}); }
+    else { const f = new Date(+o.k.slice(0, 4), +o.k.slice(5, 7), 0); o.parcial = f.toISOString().slice(0, 10) > oy; o.rot = dtx(o.k + "-01").toLocaleDateString("pt-BR", {month:"short", year:"2-digit"}); }
+    return o;
+  }).slice(IG.modo === "sem" ? -13 : -6);
+}
+function igRender(){
+  const body = $("#igBody"), hero = $("#igHero");
+  const p = IG.perfil?.[0], novos30 = (IG.seg || []).reduce((t, r) => t + (r.follower_count_1d || 0), 0);
+  hero.innerHTML = p ? `<div><b>${fmt(p.followers_count)}</b><span>seguidores agora</span></div><div><b>+${fmt(novos30)}</b><span>novos seguidores nos últimos 30 dias</span></div><div><b>${fmt(p.media_count)}</b><span>publicações</span></div>` : "";
+  if (p){ $("#igSub").textContent = "@" + p.username; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
+  $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + " · atualiza sozinho a cada 10 min" : "";
+  const ps = igPeriodos(); if (!ps.length){ if (IG.dias) body.innerHTML = `<p class="msg">Ainda não há números para mostrar.</p>`; return; }
+  const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2);
+  const nome = {dia:["Ontem","anteontem"], sem:["Última semana fechada","a semana anterior"], mes:["Último mês fechado","o mês anterior"]}[IG.modo];
+  const val = (o, m) => m === "reach" && IG.modo !== "dia" ? o?.reachMed : o?.[m];
+  const kpis = IG_M.map(([m, rot]) => {
+    const a = val(cur, m), b = val(prev, m), d = a != null && b ? (a - b) / b * 100 : null;
+    return `<div class="kpi"><span>${rot}${m === "reach" && IG.modo !== "dia" ? " (média/dia)" : ""}</span><b>${fmt(a)}</b>${d == null ? `<i>&nbsp;</i>` : `<i class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs ${nome[1]}</i>`}</div>`;
+  }).join("");
+  const W_ = 1000, H_ = 180, bw = W_ / ps.length, mx = Math.max(...ps.map(x => x.views || 0), 1);
+  const bars = ps.map((x, i) => { const h = (x.views || 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - h}" width="${bw * .7}" height="${Math.max(h, 1)}" rx="3"><title>${esc(x.rot)}: ${fmt(x.views)} visualizações${x.parcial ? " (parcial)" : ""}</title></rect>${ps.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto || x.rot)}</text>` : ""}</g>`; }).join("");
+  const linhas = [...ps].reverse().map(x => `<tr><td>${esc(x.rot)}${x.parcial ? " · parcial" : ""}</td>${IG_M.map(([m]) => `<td>${fmt(val(x, m))}</td>`).join("")}</tr>`).join("");
+  body.innerHTML = `<p class="sub" style="margin:0 0 8px">${nome[0]}${cur ? ` (${esc(cur.rot)})` : ""}, comparado com ${nome[1]}. O Instagram fecha os números de cada dia só no dia seguinte.</p>
+    <div class="kpis">${kpis}</div>
+    <div class="chart"><h3>Visualizações por ${IG.modo === "dia" ? "dia" : IG.modo === "sem" ? "semana" : "mês"}</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações">${bars}</svg></div>
+    <div class="tbl"><h3>Todos os números</h3><table><thead><tr><th>${IG.modo === "dia" ? "Dia" : IG.modo === "sem" ? "Semana" : "Mês"}</th>${IG_M.map(([m, r]) => `<th>${r}${m === "reach" && IG.modo !== "dia" ? " /dia" : ""}</th>`).join("")}</tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+function igErro(e){
+  const c = e?.code, msg = c === "not_in_manifest" || c === "not_granted" ? "O Windsor.ai não foi liberado para esta página. Abra o menu de permissões da página e libere." :
+    c === "server_not_connected" || c === "needs_reauth" ? "O Windsor.ai não está conectado. Conecte em claude.ai → Configurações → Conectores." :
+    c === "approval_required" ? "A página precisa da sua aprovação para ler o Instagram. Clique em ↻ Atualizar." : "Não consegui buscar os números agora. Tente ↻ Atualizar daqui a pouco.";
+  if (!IG.dias) $("#igBody").innerHTML = `<p class="msg">${esc(msg)}</p>`; else $("#igWhen").textContent = msg;
+}
+function igRecebe(nome, r){
+  const pl = r?.payload; if (!pl || typeof pl !== "object") return;
+  if (pl.status === "pending"){ setTimeout(() => igBuscar(nome), 15000); return; }
+  if (Array.isArray(pl.data)){ IG[nome] = pl.data; IG.quando = r.cache?.storedAt || Date.now(); igRender(); }
+}
+async function igBuscar(nome){
+  const mcp = await window.claude?.use?.("mcp"); if (!mcp){ igErro({code:"server_not_connected"}); return; }
+  try { igRecebe(nome, await mcp.callTool("Windsor.ai", "get_data", IG_Q[nome], {cache:IG_CACHE})); } catch (e){ igErro(e); }
+}
+async function igAbrir(){
+  $("#ig").hidden = false; IG.aberto = true; $("#igX").focus();
+  if (IG.watches.length) return igRender();
+  const mcp = await window.claude?.use?.("mcp");
+  if (!mcp){ $("#igBody").innerHTML = `<p class="msg">O painel do Instagram só funciona com a página aberta pelo claude.ai, com o conector Windsor.ai.</p>`; return; }
+  await igBuscar("perfil");
+  for (const nome of ["dias", "seg", "perfil"]){
+    IG.watches.push(mcp.watchTool("Windsor.ai", "get_data", IG_Q[nome], ev => ev.type === "data" ? igRecebe(nome, ev.result) : igErro(ev.error), {cache:IG_CACHE, refetchInterval:600000}));
+  }
+}
+$("#igBtn").addEventListener("click", igAbrir);
+$("#igX").addEventListener("click", () => { $("#ig").hidden = true; IG.aberto = false; $("#igBtn").focus(); });
+$("#ig").addEventListener("click", e => { if (e.target.id === "ig") $("#igX").click(); });
+$("#ig").addEventListener("keydown", e => { if (e.key === "Escape"){ e.stopPropagation(); $("#igX").click(); } });
+document.querySelectorAll("[data-ig]").forEach(b => b.addEventListener("click", () => { IG.modo = b.dataset.ig; document.querySelectorAll("[data-ig]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); igRender(); }));
+$("#igRef").addEventListener("click", async () => { const mcp = await window.claude?.use?.("mcp"); if (!mcp) return; for (const n of ["dias", "seg", "perfil"]) try { igRecebe(n, await mcp.callTool("Windsor.ai", "get_data", IG_Q[n], {cache:{...IG_CACHE, refresh:true}})); } catch (e){ igErro(e); } });
+if (typeof PUBLIC !== "undefined") $("#igBtn").hidden = true;
 
 /* código caindo nas telas do programador */
 const GLYPHS = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789{}[]<>=+*/;:$#ABCDEFXZ";
