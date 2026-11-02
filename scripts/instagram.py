@@ -49,6 +49,9 @@ def gravar(nome, linhas):
     urllib.request.urlopen(req, timeout=60).read()
 
 
+bruta, chave = os.environ["WINDSOR_API_KEY"], chave_windsor()
+print(f"chave: {len(chave)} caracteres, so letras e numeros: {chave.isalnum()}, veio de endereco: {'api_key=' in bruta}, endereco com {bruta.count('&')} parametros")
+
 falhas = 0
 for nome, consulta in CONSULTAS.items():
     try:
