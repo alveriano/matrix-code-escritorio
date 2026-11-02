@@ -543,6 +543,16 @@ async function donoVoz(){
     falar(a, resumoFala(t));
   }).subscribe();
 }
+// números do Instagram: o robô do GitHub grava na tabela "instagram" a cada 15 min; aqui só lemos e ouvimos as mudanças
+let igCb = null, igCanal = null;
+window.IG_SITE = async cb => {
+  igCb = cb;
+  const {data, error} = await sb.from("instagram").select("chave,dados,atualizado");
+  if (error) return null;
+  data.forEach(r => igCb(r.chave, r.dados, r.atualizado));
+  if (!igCanal) igCanal = sb.channel("instagram-ao-vivo").on("postgres_changes", {event:"*", schema:"public", table:"instagram"}, ({new:r}) => { if (r?.chave && igCb) igCb(r.chave, r.dados, r.atualizado); }).subscribe();
+  return data.length;
+};
 sb.auth.onAuthStateChange((ev, session) => {
   if (ev === "PASSWORD_RECOVERY"){
     const np = prompt("Escolha uma senha nova (mínimo 8 caracteres):");
@@ -1582,7 +1592,7 @@ function igRender(){
   const body = $("#igBody"), hero = $("#igHero");
   const p = IG.perfil?.[0], novos30 = (IG.seg || []).reduce((t, r) => t + (r.follower_count_1d || 0), 0);
   if (p){ $("#igSub").textContent = `@${p.username} · ${fmt(p.media_count)} publicações`; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
-  $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + " · atualiza sozinho a cada 10 min" : "";
+  $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + (typeof PUBLIC !== "undefined" ? " · atualiza sozinho a cada 15 min" : " · atualiza sozinho a cada 10 min") : "";
   const ps = igPeriodos();
   const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2);
   // os novos seguidores só existem para os últimos 30 dias: um mês que começa antes disso sairia contado pela metade
@@ -1631,8 +1641,15 @@ async function igBuscar(nome){
   const mcp = await window.claude?.use?.("mcp"); if (!mcp){ igErro({code:"server_not_connected"}); return; }
   try { igRecebe(nome, await mcp.callTool("Windsor.ai", "get_data", IG_Q[nome], {cache:IG_CACHE})); } catch (e){ igErro(e); }
 }
+// no site público os números vêm do Supabase, gravados pelo robô do GitHub a cada 15 min
+async function igSite(){
+  const n = await window.IG_SITE?.((nome, dados, quando) => { IG[nome] = dados; IG.quando = Math.max(IG.quando || 0, Date.parse(quando) || 0); igRender(); });
+  if (n == null) $("#igBody").innerHTML = `<p class="msg">Não consegui ler os números agora. Tente ↻ Atualizar.</p>`;
+  else if (n === 0) $("#igBody").innerHTML = `<p class="msg">Os números ainda não chegaram. Eles aparecem aqui depois da primeira atualização automática.</p>`;
+}
 async function igAbrir(){
   $("#ig").hidden = false; IG.aberto = true; $("#igX").focus();
+  if (typeof PUBLIC !== "undefined"){ if (!IG.site){ IG.site = true; await igSite(); } else igRender(); return; }
   if (IG.watches.length) return igRender();
   const mcp = await window.claude?.use?.("mcp");
   if (!mcp){ $("#igBody").innerHTML = `<p class="msg">O painel do Instagram só funciona com a página aberta pelo claude.ai, com o conector Windsor.ai.</p>`; return; }
@@ -1646,8 +1663,7 @@ $("#igX").addEventListener("click", () => { $("#ig").hidden = true; IG.aberto = 
 $("#ig").addEventListener("click", e => { if (e.target.id === "ig") $("#igX").click(); });
 $("#ig").addEventListener("keydown", e => { if (e.key === "Escape"){ e.stopPropagation(); $("#igX").click(); } });
 document.querySelectorAll("[data-ig]").forEach(b => b.addEventListener("click", () => { IG.modo = b.dataset.ig; document.querySelectorAll("[data-ig]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); igRender(); }));
-$("#igRef").addEventListener("click", async () => { const mcp = await window.claude?.use?.("mcp"); if (!mcp) return; for (const n of ["dias", "seg", "perfil"]) try { igRecebe(n, await mcp.callTool("Windsor.ai", "get_data", IG_Q[n], {cache:{...IG_CACHE, refresh:true}})); } catch (e){ igErro(e); } });
-if (typeof PUBLIC !== "undefined") $("#igBtn").hidden = true;
+$("#igRef").addEventListener("click", async () => { if (typeof PUBLIC !== "undefined") return igSite(); const mcp = await window.claude?.use?.("mcp"); if (!mcp) return; for (const n of ["dias", "seg", "perfil"]) try { igRecebe(n, await mcp.callTool("Windsor.ai", "get_data", IG_Q[n], {cache:{...IG_CACHE, refresh:true}})); } catch (e){ igErro(e); } });
 
 /* código caindo nas telas do programador */
 const GLYPHS = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789{}[]<>=+*/;:$#ABCDEFXZ";
