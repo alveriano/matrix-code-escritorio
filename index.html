@@ -1,0 +1,1154 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Escritório virtual da Matrix Code: entre com seu boneco e converse ao vivo."><style>*,*::before,*::after{box-sizing:border-box}html,body{margin:0}</style></head><body>
+<title>Matrix Code</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: planta de um andar vista de cima — 36 salas em 4 fileiras com dois corredores e um hall à esquerda; cada sala tem a mesa de um agente. Painel do agente fixo no canto. */
+:root{
+  --ink:#13201A; --muted:#4F6157; --bg:#E3EBE4;
+  --wall:#1E2A24; --corr:#D2DCD0; --corr-line:#C0CDBD; --room:#F3EBDA; --desk:#8A5D3B; --desktop:#B07D52;
+  --screen:#0C2418; --glow:#6CFF9C;
+  --panel:#F8FBF8; --line:#CBD8CE; --accent:#16A34A; --accent-ink:#FFFFFF; --work:#2E9E6A;
+  --dk:brightness(1); --dkf:brightness(1);
+  --f-display:"Big Shoulders Display","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#E4F2E8; --muted:#97AE9F; --bg:#0A120E;
+  --wall:#040806; --corr:#1D2A23; --corr-line:#26372E; --room:#3A3428; --desk:#5E3F28; --desktop:#83593A;
+  --screen:#06180F; --glow:#6CFF9C;
+  --panel:#111C16; --line:#21342A; --accent:#3BE07A; --accent-ink:#04150B; --work:#4CC38A; --dk:brightness(.66); --dkf:brightness(.86); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ink:#E4F2E8; --muted:#97AE9F; --bg:#0A120E;
+  --wall:#040806; --corr:#1D2A23; --corr-line:#26372E; --room:#3A3428; --desk:#5E3F28; --desktop:#83593A;
+  --screen:#06180F; --glow:#6CFF9C;
+  --panel:#111C16; --line:#21342A; --accent:#3BE07A; --accent-ink:#04150B; --work:#4CC38A; --dk:brightness(.66); --dkf:brightness(.86); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 90px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.head{max-width:1560px;margin:0 auto 12px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:flex-end}
+h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);line-height:.88;margin:0;text-transform:uppercase}
+.lead{margin:6px 0 0;max-width:62ch;color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.controls input{padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);width:200px;max-width:100%;min-width:0}
+.pill{padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-weight:500;white-space:nowrap}
+.pill:hover{border-color:var(--ink)}
+.pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.legend{max-width:1560px;margin:0 auto 10px;display:flex;flex-wrap:wrap;gap:6px}
+.legend button{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px}
+.legend i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+
+.mapwrap{max-width:1560px;margin:0 auto;position:relative}
+.map{overflow:auto;border-radius:10px;border:6px solid var(--wall);background:var(--wall);max-height:calc(100vh - 120px);-webkit-overflow-scrolling:touch}
+.sizer{position:relative}
+.world{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--corr)}
+.zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:4px;z-index:20}
+.zoom button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:600}
+.hint{max-width:1560px;margin:8px auto 0;font-size:12.5px;color:var(--muted)}
+
+/* planta */
+.corr{position:absolute;background:repeating-linear-gradient(90deg,var(--corr) 0 60px,var(--corr-line) 60px 61px)}
+.room{position:absolute;background:color-mix(in srgb,var(--c) 14%,var(--room))}
+.room .rug{position:absolute;left:22%;right:22%;top:30%;bottom:22%;border-radius:10px;background:color-mix(in srgb,var(--c) 30%,var(--room));opacity:.7}
+.desk .tag{position:absolute;left:3px;right:3px;top:0;font-size:8.5px;line-height:12px;color:#F2EEE4;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.desk.hit{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.room .sign{font-size:24px;color:var(--c);filter:brightness(.75);opacity:1;z-index:1}
+.legend small{color:var(--muted)}
+.room .lbl{position:absolute;left:10px;top:8px;right:10px;font-size:10px;line-height:1.2;font-weight:600;color:var(--ink);opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room .lbl b{font-family:var(--f-mono);font-weight:500;color:var(--c);filter:brightness(.8)}
+.room .plant{position:absolute;font-size:22px}
+.room.dim{filter:grayscale(1) brightness(.85)}
+.room.hit{box-shadow:inset 0 0 0 4px var(--accent)}
+.wall{position:absolute;background:var(--wall)}
+.deco{position:absolute;font-size:26px;line-height:1}
+.sign{position:absolute;font-family:var(--f-display);font-weight:900;font-size:22px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);opacity:.75}
+.corrlbl{position:absolute;font-family:var(--f-mono);font-size:11px;letter-spacing:.2em;color:var(--muted);opacity:.7}
+
+.desk{position:absolute;width:150px;height:38px}
+.desk::after{content:"";position:absolute;left:6px;right:6px;bottom:-5px;height:8px;border-radius:50%;background:rgba(0,0,0,.22);z-index:-1}
+.desk .top{position:absolute;inset:0 0 13px 0;background:linear-gradient(#C08A5C,#A9774B);border-radius:4px;box-shadow:inset 0 2px 0 rgba(255,255,255,.25)}
+.desk .front{position:absolute;left:0;right:0;bottom:0;height:15px;background:linear-gradient(var(--desk),color-mix(in srgb,var(--desk) 75%,#000));border-radius:0 0 4px 4px}
+.desk .front::before,.desk .front::after{content:"";position:absolute;top:4px;width:14px;height:2px;border-radius:1px;background:rgba(255,255,255,.3)}
+.desk .front::before{left:14px}.desk .front::after{right:14px}
+.mon{position:absolute;left:8px;bottom:22px;width:56px;height:38px;background:#1A1F25;border-radius:4px;padding:3px;z-index:1}
+.mon::after{content:"";position:absolute;left:50%;margin-left:-5px;bottom:-6px;width:10px;height:6px;background:#1A1F25}
+.mon2{left:66px;width:42px;height:28px}
+.kbd{position:absolute;left:30px;top:15px;width:42px;height:6px;border-radius:2px;background:#2B2F38;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);z-index:1}
+.mug{position:absolute;left:120px;top:6px;width:9px;height:10px;border-radius:2px 2px 3px 3px;background:#F2EEE4;z-index:1}
+.mug::after{content:"";position:absolute;right:-4px;top:2px;width:4px;height:5px;border:1.5px solid #F2EEE4;border-left:0;border-radius:0 3px 3px 0}
+.screen{position:relative;width:100%;height:100%;background:var(--screen);border-radius:2px;overflow:hidden;opacity:.35;transition:opacity .4s}
+.desk.on .screen{opacity:1;box-shadow:0 0 12px color-mix(in srgb,var(--glow) 55%,transparent)}
+.s-tl{display:grid;align-content:center;gap:2px;padding:3px}
+.s-tl i{height:4px;border-radius:1px;background:linear-gradient(90deg,#E5533D 0 30%,#3FB27F 30% 55%,#8E7CF0 55% 80%,#F0B83C 80%)}
+.s-tl i:nth-child(2){background:linear-gradient(90deg,#2FB5C8 0 45%,transparent 45% 52%,#2FB5C8 52%)}
+.s-tl i:nth-child(3){background:repeating-linear-gradient(90deg,#7FE3F0 0 2px,transparent 2px 3px);opacity:.6}
+.s-tl b{position:absolute;left:3px;top:2px;bottom:2px;width:1.5px;background:#fff;animation:playhead 4s linear infinite}
+@keyframes playhead{to{transform:translateX(30px)}}
+.s-matrix{background:#010603}
+.rain{display:block;width:100%;height:100%}
+.s-term{background:#010603;display:grid;align-content:start;gap:3px;padding:4px}
+.s-term i{height:2px;background:#4ADE80;transform-origin:left;animation:typeline 2.2s steps(10) infinite}
+.s-term i:nth-child(2){width:70%;animation-delay:.5s}.s-term i:nth-child(3){width:85%;animation-delay:1s;background:#F0B83C}.s-term i:nth-child(4){width:40%;animation-delay:1.5s}
+.led{animation:blink 1.2s steps(2,jump-none) infinite}
+@keyframes blink{50%{opacity:.15}}
+.pile{position:absolute;bottom:20px;width:17px;height:var(--h);background:repeating-linear-gradient(#FFFFFF 0 2px,#D9D2C3 2px 3px);border-radius:1px;box-shadow:1px 1px 0 rgba(0,0,0,.18);z-index:2}
+.pile::after{content:"";position:absolute;left:-2px;right:-2px;top:-3px;height:4px;background:#F4E3B5;border-radius:1px}
+.sheet{position:absolute;width:17px;height:12px;background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.25);z-index:2;background-image:repeating-linear-gradient(transparent 0 2px,rgba(80,90,110,.35) 2px 2.6px);background-size:12px 100%;background-repeat:no-repeat;background-position:2px 2px}
+.pens{position:absolute;left:136px;top:-6px;width:7px;height:10px;background:#16A34A;border-radius:1px 1px 2px 2px;z-index:2;box-shadow:-1px -4px 0 -2px #E5533D,2px -5px 0 -2px #2F6FD6}
+.sp .badge{position:absolute;top:-20px;right:-8px;font-size:17px;animation:bob 1.1s ease-in-out infinite;pointer-events:none}
+.daylist{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px}
+.daylist li{display:flex;gap:8px;align-items:baseline}
+.daylist time{flex:0 0 40px;font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.chair{position:absolute;width:32px;height:28px;border-radius:11px 11px 5px 5px;background:#2B2F38;box-shadow:inset 0 -5px 0 rgba(0,0,0,.35),inset 0 3px 0 rgba(255,255,255,.08)}
+
+/* piso, paredes, móveis e luz */
+.room{box-shadow:inset 0 18px 24px -16px rgba(0,0,0,.5),inset 0 0 0 1px rgba(0,0,0,.06);filter:var(--dk)}
+.corr{filter:var(--dk);background:linear-gradient(transparent 34%,color-mix(in srgb,var(--accent) 22%,transparent) 34% 66%,transparent 66%),linear-gradient(90deg,rgba(0,0,0,.07) 1px,transparent 1px) 0 0/55px 55px,linear-gradient(rgba(0,0,0,.07) 1px,transparent 1px) 0 0/55px 55px,var(--corr)}
+.room[data-floor="madeira"]{background:repeating-linear-gradient(0deg,rgba(110,70,30,.17) 0 1px,transparent 1px 24px),repeating-linear-gradient(90deg,#E4CCA4 0 118px,#D9BE91 118px 119px,#E0C69B 119px 236px,#D3B688 236px 237px)}
+.room[data-floor="nogueira"]{background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 24px),repeating-linear-gradient(90deg,#8E6341 0 118px,#6E4A2F 118px 119px,#86593A 119px 236px,#6E4A2F 236px 237px)}
+.room[data-floor="ceramica"]{background:linear-gradient(90deg,rgba(0,0,0,.09) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(rgba(0,0,0,.09) 1px,transparent 1px) 0 0/44px 44px,#EEE8DC}
+.room[data-floor="carpete"]{background:radial-gradient(rgba(0,0,0,.08) 1px,transparent 1.6px) 0 0/5px 5px,color-mix(in srgb,var(--c) 34%,#D4CBBB)}
+.room[data-floor="concreto"]{background:radial-gradient(circle at 25% 30%,rgba(255,255,255,.3),transparent 45%),radial-gradient(circle at 75% 75%,rgba(0,0,0,.1),transparent 40%),#BEB9B1}
+.room[data-floor="xadrez"]{background:conic-gradient(#ECE5D7 25%,#C9BBA2 0 50%,#ECE5D7 0 75%,#C9BBA2 0) 0 0/52px 52px}
+.room .rug{left:20%;right:20%;top:44%;bottom:20%;border-radius:12px;opacity:.85;background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--c) 42%,transparent) 0 9px,color-mix(in srgb,var(--c) 30%,transparent) 9px 18px);box-shadow:inset 0 0 0 4px color-mix(in srgb,var(--c) 70%,#000),inset 0 0 0 7px rgba(255,255,255,.35)}
+.world.no-tapetes .room .rug{display:none}
+.plaque{position:absolute;left:14px;bottom:16px;display:flex;align-items:center;gap:7px;padding:5px 11px 5px 9px;border-radius:7px;background:rgba(20,24,30,.84);color:#F2EEE4;font-family:var(--f-display);font-weight:900;font-size:17px;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 3px 8px rgba(0,0,0,.25);max-width:calc(100% - 28px);white-space:nowrap;overflow:hidden}
+.plaque i{flex:0 0 9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.wall{box-shadow:0 3px 7px rgba(0,0,0,.3)}
+.win{position:absolute;top:1px;height:5px;border-radius:1px;background:linear-gradient(90deg,#BFE3F2,#F2FBFE 50%,#BFE3F2);z-index:3}
+.beam{position:absolute;top:7px;height:230px;pointer-events:none;z-index:1;clip-path:polygon(0 0,58% 0,100% 100%,42% 100%);background:linear-gradient(rgba(255,248,220,.42),transparent)}
+.fur{position:absolute;pointer-events:none;line-height:0;filter:var(--dkf)}
+.fur svg{width:100%;height:100%;display:block;overflow:visible}
+.glow{position:absolute;border-radius:50%;pointer-events:none;z-index:2;opacity:0;transition:opacity .8s;background:radial-gradient(closest-side,var(--g,rgba(255,214,140,.6)),transparent);mix-blend-mode:screen}
+.world.no-plantas .fur[data-g="plantas"],.world.no-tapetes .fur[data-g="tapetes"],.world.no-quadros .fur[data-g="quadros"],.world.no-estudio .fur[data-g="estudio"],.world.no-moveis .fur[data-g="moveis"]{display:none}
+.world.no-estudio .glow[data-g="estudio"],.world.no-quadros .glow[data-g="quadros"],.world.no-moveis .glow[data-g="moveis"]{display:none}
+.world[data-light="tarde"] :is(.room,.corr){filter:var(--dk) sepia(.3) saturate(1.3) hue-rotate(-12deg) brightness(.92)}
+.world[data-light="tarde"] :is(.fur,.desk .top,.desk .front,.chair){filter:var(--dkf) sepia(.25) saturate(1.2) brightness(.95)}
+.world[data-light="tarde"] .beam{background:linear-gradient(rgba(255,160,80,.45),transparent)}
+.world[data-light="tarde"] .win{background:linear-gradient(90deg,#F5B37A,#FFE1B8 50%,#F5B37A)}
+.world[data-light="tarde"] .glow{opacity:.45}
+.world[data-light="noite"] :is(.room,.corr){filter:var(--dk) brightness(.42) saturate(.75) hue-rotate(8deg)}
+.world[data-light="noite"] :is(.fur:not(.lit),.desk .top,.desk .front,.chair){filter:brightness(.5) saturate(.8)}
+.world[data-light="noite"] .wall{background:#07090C}
+.world[data-light="noite"] .beam{display:none}
+.world[data-light="noite"] .win{background:#1D2A4E}
+.world[data-light="noite"] .sp svg{filter:brightness(.85)}
+.world[data-light="noite"] .glow{opacity:1;filter:saturate(1.3) brightness(1.5)}
+.world.names .sp .nm{opacity:1}
+
+.s-video .bar{position:absolute;left:3px;right:3px;bottom:3px;height:3px;background:rgba(255,255,255,.2)}
+.s-video .bar::after{content:"";position:absolute;inset:0;background:var(--glow);transform-origin:left;animation:prog 3s linear infinite}
+.s-video .play{position:absolute;left:50%;top:38%;margin:-5px 0 0 -3px;border:6px solid transparent;border-left:9px solid #fff;border-right:0}
+@keyframes prog{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.s-chart{display:flex;align-items:flex-end;gap:2px;padding:3px}
+.s-chart i{flex:1;background:var(--glow);animation:grow 1.6s ease-in-out infinite alternate}
+.s-chart i:nth-child(2){animation-delay:.3s}.s-chart i:nth-child(3){animation-delay:.6s}.s-chart i:nth-child(4){animation-delay:.9s}
+@keyframes grow{from{height:20%}to{height:95%}}
+.s-text{padding:4px;display:grid;gap:3px;align-content:start}
+.s-text i{height:3px;background:rgba(255,255,255,.75);transform-origin:left;animation:typeline 2.4s steps(8) infinite}
+.s-text i:nth-child(2){width:80%;animation-delay:.4s}.s-text i:nth-child(3){width:60%;animation-delay:.8s}
+@keyframes typeline{from{transform:scaleX(0)}60%,to{transform:scaleX(1)}}
+.s-slides{display:flex;gap:3px;padding:4px;animation:slide 3s ease-in-out infinite}
+.s-slides i{flex:0 0 14px;height:100%;border-radius:2px;background:var(--c)}
+.s-slides i:nth-child(even){background:var(--glow)}
+@keyframes slide{0%,30%{transform:translateX(0)}50%,80%{transform:translateX(-17px)}100%{transform:translateX(0)}}
+.s-wave{display:flex;align-items:center;gap:2px;padding:3px}
+.s-wave i{flex:1;height:30%;background:var(--glow);border-radius:2px;animation:grow .7s ease-in-out infinite alternate}
+.s-wave i:nth-child(odd){animation-delay:.35s}
+.s-palette{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:3px}
+.s-palette i{border-radius:2px;animation:hue 4s linear infinite}
+.s-palette i:nth-child(1){background:#E5533D}.s-palette i:nth-child(2){background:#E3B35A}.s-palette i:nth-child(3){background:#4CC38A}
+.s-palette i:nth-child(4){background:#7FE3F0}.s-palette i:nth-child(5){background:#8E7CF0}.s-palette i:nth-child(6){background:#F2EEE4}
+@keyframes hue{to{filter:hue-rotate(360deg)}}
+.s-target{display:grid;place-items:center}
+.s-target i{position:absolute;border-radius:50%;border:2px solid var(--glow);animation:ping 2s ease-out infinite}
+.s-target i:nth-child(1){width:6px;height:6px;background:#E5533D;border-color:#E5533D;animation:none}
+.s-target i:nth-child(2){width:10px;height:10px}.s-target i:nth-child(3){width:10px;height:10px;animation-delay:1s}
+@keyframes ping{to{transform:scale(2.6);opacity:0}}
+.s-feed{padding:3px;display:grid;gap:2px;animation:scroll 2.8s linear infinite}
+.s-feed i{height:9px;border-radius:2px;background:rgba(255,255,255,.18);border-left:5px solid var(--c)}
+@keyframes scroll{to{transform:translateY(-11px)}}
+
+/* personagens */
+.sp{position:absolute;left:0;top:0;width:44px;height:70px;cursor:pointer;background:none;border:0;padding:0;will-change:transform}
+.sp svg{width:44px;height:70px;display:block;overflow:visible}
+.sp .flipper{display:block;transform-origin:50% 100%}
+.sp.flip .flipper{transform:scaleX(-1)}
+.sp .lgL,.sp .lgR,.sp .arL,.sp .arR{transform-box:fill-box;transform-origin:50% 0}
+.sp.walk .lgL{animation:sw .38s ease-in-out infinite alternate}
+.sp.walk .lgR{animation:sw .38s ease-in-out infinite alternate-reverse}
+.sp.walk .arL{animation:sw .38s ease-in-out infinite alternate-reverse}
+.sp.walk .arR{animation:sw .38s ease-in-out infinite alternate}
+.sp.walk .bodyg{animation:stp .19s ease-in-out infinite alternate}
+@keyframes sw{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
+@keyframes stp{to{transform:translateY(-1.5px)}}
+.sp.sit .lgL,.sp.sit .lgR{visibility:hidden}
+.sp.sit .arL{animation:typ .26s ease-in-out infinite alternate;transform:rotate(-40deg)}
+.sp.sit .arR{animation:typ .26s ease-in-out infinite alternate-reverse;transform:rotate(40deg)}
+@keyframes typ{from{transform:rotate(-35deg)}to{transform:rotate(-48deg)}}
+.sp.sit .arR{animation-name:typr}
+@keyframes typr{from{transform:rotate(35deg)}to{transform:rotate(48deg)}}
+.sp.wave .arR{animation:wv .3s ease-in-out infinite alternate}
+@keyframes wv{from{transform:rotate(150deg)}to{transform:rotate(190deg)}}
+.sp.jump svg{animation:jp .45s ease-in-out infinite alternate}
+@keyframes jp{to{transform:translateY(-14px)}}
+.sp .nm{position:absolute;left:50%;top:72px;transform:translateX(-50%);font-size:10px;font-weight:600;white-space:nowrap;background:var(--wall);color:#F2EEE4;padding:1px 6px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none}
+.sp:hover .nm,.sp:focus-visible .nm,.sp.sel .nm,.sp.near .nm{opacity:1}
+.sp.sel::before{content:"";position:absolute;left:50%;bottom:-6px;width:50px;height:14px;margin-left:-25px;border-radius:50%;border:3px solid var(--accent);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.sp.near svg{filter:drop-shadow(0 0 5px var(--accent))}
+.sp.dim{opacity:.25}
+.sp.me{cursor:default}
+.sp.other{cursor:default}
+.sp.other .nm{opacity:1;background:#2F6FD6}
+.pill.online{display:inline-flex;align-items:center;cursor:default}
+.chatbar{max-width:1560px;margin:8px auto 0;display:flex;gap:8px}
+.chatbar input{flex:1;min-width:0;padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.sp.me .nm{opacity:1;background:var(--accent);color:var(--accent-ink)}
+.sp.me::after{content:"▼";position:absolute;top:-16px;left:50%;transform:translateX(-50%);color:var(--accent);font-size:13px;animation:bob 1.1s ease-in-out infinite}
+@keyframes bob{50%{transform:translate(-50%,-3px)}}
+.bub{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);background:#fff;color:#1B1F24;font-size:11px;line-height:1.25;padding:5px 8px;border-radius:9px;box-shadow:0 3px 10px rgba(0,0,0,.25);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis;animation:pop .25s ease-out;pointer-events:none}
+.bub::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+.prompt{position:absolute;bottom:78px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:600;padding:4px 8px;border-radius:8px;white-space:nowrap;pointer-events:none}
+@keyframes pop{from{transform:translateX(-50%) scale(.5);opacity:0}}
+.confetti{position:absolute;font-size:18px;animation:fall 2.6s linear forwards;pointer-events:none;z-index:2000}
+@keyframes fall{to{transform:translateY(240px) rotate(320deg);opacity:0}}
+
+/* painel */
+.card{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:380px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:16px;display:grid;gap:10px;z-index:30;animation:rise .25s ease-out}
+@keyframes rise{from{transform:translateY(20px);opacity:0}}
+.card .top{display:flex;gap:12px;align-items:center}
+.card .big{width:62px;height:62px;flex:0 0 62px;display:grid;place-items:center;border-radius:12px;background:color-mix(in srgb,var(--c) 25%,transparent);overflow:hidden}
+.card .big svg{width:46px;height:74px;margin-top:20px}
+.card h2{margin:0;font-family:var(--f-display);font-weight:900;font-size:28px;line-height:.95;text-transform:uppercase;padding-right:30px}
+.card .where{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.card .status{display:flex;gap:8px;align-items:center;font-size:13px;padding:7px 10px;border-radius:8px;background:var(--bg)}
+.card .status i{flex:0 0 8px;height:8px;border-radius:50%;background:var(--work);animation:pulse 1.4s infinite}
+.card p{margin:0;color:var(--muted);font-size:13px}
+.card textarea{width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);resize:vertical;min-height:70px}
+.sugs{display:flex;flex-wrap:wrap;gap:6px}
+.sugs button{font-size:12px;padding:5px 9px;border-radius:999px;border:1px dashed var(--line);background:none;text-align:left}
+.sugs button:hover{border-color:var(--accent)}
+.out{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;max-height:280px;overflow:auto;font-size:13px;color:var(--ink)}
+.small{font-size:12px!important}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.acts button{padding:7px 4px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-size:11.5px;display:grid;gap:2px;justify-items:center}
+.acts button span{font-size:17px;line-height:1}
+.acts button:hover{border-color:var(--accent)}
+.visit{display:flex;gap:6px}
+.visit select{flex:1;min-width:0;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+.btn{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.cmd{font-family:var(--f-mono);font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;overflow-wrap:anywhere;user-select:all}
+.eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.x{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel)}
+.card details{display:grid;gap:8px}
+.card summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.card details[open]>*:not(summary){margin-top:8px}
+.hist{display:grid;gap:6px}
+.hist details{border:1px solid var(--line);border-radius:8px;padding:8px}
+.hist summary{color:var(--ink)}
+.hist summary span{color:var(--muted);font-size:12px}
+
+/* personalizar */
+.tabs{display:flex;gap:4px;padding:3px;background:var(--bg);border-radius:10px}
+.tabs button{flex:1;padding:7px 6px;border:0;border-radius:8px;background:none;font-weight:500;font-size:13px;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.fld{display:grid;gap:6px}
+.fld>span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sw{display:flex;flex-wrap:wrap;gap:6px}
+.sw button{width:26px;height:26px;border-radius:50%;border:2px solid var(--panel);background:var(--v);box-shadow:0 0 0 1px var(--line);padding:0;font-size:13px;line-height:1}
+.sw button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);font-size:12.5px}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.card input[type="text"]{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg)}
+.preview{display:flex;gap:14px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--bg)}
+.preview .pv{flex:0 0 60px;height:96px;display:flex;align-items:flex-end;justify-content:center}
+.preview .pv svg{width:60px;height:95px;overflow:visible}
+
+.padctl{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));display:none;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,48px);gap:5px;z-index:25}
+.padctl button{border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:17px;touch-action:none;user-select:none}
+.padctl [data-pad="U"]{grid-column:2}.padctl [data-pad="L"]{grid-column:1;grid-row:2}.padctl [data-pad="D"]{grid-column:2;grid-row:2}.padctl [data-pad="R"]{grid-column:3;grid-row:2}
+.padctl #padTalk{grid-column:3;grid-row:1;font-size:12px;font-weight:600;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.padctl #padTalk:disabled{opacity:.4}
+@media (pointer:coarse){.padctl{display:grid}.card{bottom:calc(120px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:560px){.card{left:max(16px,env(safe-area-inset-left,0px));width:auto}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:0s!important}}
+</style>
+
+<header class="head">
+  <div>
+    <h1>Matrix Code</h1>
+    <p class="lead">Bem-vindo ao escritório da Matrix Code. Monte seu boneco em 🎨 Personalizar, ande com as setas ou clicando no chão e converse com quem estiver aqui, ao vivo. O Patrick Jane edita os vídeos, o Xanax programa e a Helena cuida da papelada.</p>
+  </div>
+  <div class="controls">
+    <span class="pill online" id="online" hidden>🟢 1 online</span>
+    <button class="pill" id="czBtn">🎨 Personalizar</button>
+        <button class="pill" id="roam" aria-pressed="false" title="Quando desligado, os agentes ficam nas mesas e só saem quando você mandar">🚶 Deixar andar</button>
+    <button class="pill" id="pause" aria-pressed="false">⏸ Pausar</button>
+  </div>
+</header>
+<nav class="legend" id="legend" aria-label="Departamentos"></nav>
+<div class="mapwrap">
+  <div class="map" id="map"><div class="sizer" id="sizer"><div class="world" id="world"></div></div></div>
+  <div class="zoom"><button id="zin" aria-label="Aproximar">+</button><button id="zout" aria-label="Afastar">−</button><button id="zfit" aria-label="Ver o andar inteiro">⤢</button></div>
+</div>
+<form class="chatbar" id="chat" hidden autocomplete="off"><input id="chatIn" maxlength="140" placeholder="💬 Fale com quem está na sala… (Enter envia)" aria-label="Mensagem para quem está na sala"><button class="btn primary">Enviar</button></form>
+<p class="hint">Teclado: setas ou WASD andam · Enter abre o agente perto de você · Esc fecha. Clique no chão para ir até lá. No celular, use os botões no canto.</p>
+
+<aside class="card" id="card" hidden></aside>
+<div class="padctl" aria-label="Controles do personagem"><button data-pad="U" aria-label="Andar para cima">▲</button><button data-pad="L" aria-label="Andar para a esquerda">◀</button><button data-pad="D" aria-label="Andar para baixo">▼</button><button data-pad="R" aria-label="Andar para a direita">▶</button><button data-pad="T" id="padTalk" disabled>Falar</button></div>
+
+<script>{ let r; window.NET = new Promise(f => r = f); window.NET_OK = v => r(v); setTimeout(() => r(null), 15000); }</script>
+<script type="module">
+/* sala ao vivo sem login: conexão direta entre navegadores (Trystero) */
+const resolve = window.NET_OK;
+try {
+  const {joinRoom, selfId} = await import("https://esm.sh/trystero@0.25.4");
+  const r = joinRoom({appId: "matrix-code-escritorio-2026"}, "andar-1");
+  const pres = r.makeAction("pres"), chat = r.makeAction("chat");
+  const peers = new Map(), peerFns = [], chatFns = [];
+  let mine = null, timer = null, lastAt = 0;
+  const list = () => [{peer: selfId, isMe: true, kind: "viewer", presence: mine}, ...[...peers].map(([id, p]) => ({peer: id, isMe: false, kind: "viewer", presence: p}))];
+  const notify = () => { const l = list(); peerFns.forEach(f => f({peers: l})); };
+  const ok = d => d && typeof d === "object" && JSON.stringify(d).length < 2000;
+  pres.onMessage = (d, {peerId}) => { if (!ok(d)) return; peers.set(peerId, d); notify(); };
+  chat.onMessage = (d, {peerId}) => { if (!ok(d) || !peers.has(peerId)) return; chatFns.forEach(f => f({data: d, peer: peerId, isMe: false})); };
+  r.onPeerJoin = id => { if (mine) pres.send(mine, {target: id}); };
+  r.onPeerLeave = id => { peers.delete(id); notify(); };
+  const flush = () => { timer = null; lastAt = Date.now(); if (mine) pres.send(mine); };
+  resolve({
+    presence(p){ mine = p; if (!timer) timer = setTimeout(flush, Math.max(0, 70 - (Date.now() - lastAt))); return Promise.resolve(); },
+    onPeers(f){ peerFns.push(f); f({peers: list()}); },
+    peers: list,
+    on(t, f){ if (t === "chat") chatFns.push(f); },
+    async emit(t, d){ if (t !== "chat") return; await chat.send(d); chatFns.forEach(f => f({data: d, peer: selfId, isMe: true, sameTab: true})); }
+  });
+} catch (e) { console.warn("sala ao vivo indisponível", e); resolve(null); }
+</script>
+
+<script>
+const PUBLIC = true;
+/* ---------- dados ---------- */
+const DEPTS = [
+  {t:"Edição de Vídeo", c:"#D9A13B", a:[
+    ["Patrick Jane","video","Editor de vídeo do CowTalk. Pega o vídeo em bruto e entrega o corte pronto no Modelo 1, 3 ou 4.","Use o agente Patrick Jane para editar corte 6.mp4 no modelo 4",["Renderizando um corte…","Conferindo a folha de quadros","Loudness em -16 LUFS"]],
+  ]},
+  {t:"Sua sala", c:"#22C55E", room:"recep", at:[330, 112], a:[
+    ["Helena","papers","Sua secretária. Anota tudo o que você pede no prédio e o que você contar para ela, e todo dia às 20:00 entrega o relatório do dia.","",["Organizando a papelada","Anotando seus pedidos","Arquivando os relatórios","Conferindo a agenda"]],
+  ]},
+  {t:"Programação", c:"#4ADE80", a:[
+    ["Xanax","matrix","Programador da Matrix Code. Escreve, revisa e conserta código: sites, scripts, automações e integrações.","Use o agente Xanax para revisar o código do site",["Compilando…","Rodando os testes","Revisando o pull request","git push origin main"]],
+  ]},
+];
+const SCREENS = {matrix:'<canvas class="rain" width="208" height="128"></canvas>', video:'<span class="play"></span><span class="bar"></span>', chart:"<i></i><i></i><i></i><i></i>", text:"<i></i><i></i><i></i>", slides:"<i></i>".repeat(5), wave:"<i></i>".repeat(8), palette:"<i></i>".repeat(6), target:"<i></i><i></i><i></i>", feed:"<i></i>".repeat(5)};
+const CHAT = ["E aí, como tá o corte?","Viu o alcance de ontem?","Bora fazer um teste?","Me manda o briefing","Ficou top!","Café depois?","Esse gancho é bom","Precisa de ajuda?"];
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const store = { get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+
+/* ---------- skins (personagens originais) ---------- */
+const SKIN_T = ["#F1C9A5","#E0AC84","#C68A5E","#9C6644","#6E4630"];
+const HAIR_C = ["#2A2018","#4A3020","#7A4A26","#C9963F","#1B1B1F","#8C2F23","#B9B2A8"];
+const M_STYLES = ["curto","lado","cacheado","raspado","topete"], F_STYLES = ["longo","coque","rabo","chanel","cacheado"];
+function skinFor(i, g){
+  const s = (i * 7919) >>> 0;
+  return {g, skin:SKIN_T[s % 5], hair:HAIR_C[(s >> 3) % 7], style:(g === "m" ? M_STYLES : F_STYLES)[(s >> 5) % 5],
+    pants:["#2F3A4F","#3B3B3B","#4E3B2F","#264A5E"][(s >> 7) % 4], skirt:g === "f" && (s >> 9) % 3 === 0,
+    beard:g === "m" && (s >> 11) % 3 === 0, glasses:(s >> 13) % 4 === 0, earrings:g === "f" && (s >> 15) % 2 === 0};
+}
+function spriteSVG(k, shirt){
+  const H = k.hair, S = k.skin; shirt = k.shirt || shirt; const sleeve = k.jacket || shirt;
+  const backHair = k.g === "f" ? ({longo:`<path d="M10 12q0-11 12-11t12 11v17q-3 3-6 0V15H16v14q-3 3-6 0z" fill="${H}"/>`, cacheado:`<g fill="${H}"><circle cx="13" cy="15" r="5"/><circle cx="31" cy="15" r="5"/><circle cx="12" cy="22" r="4.5"/><circle cx="32" cy="22" r="4.5"/></g>`, rabo:`<path d="M30 7q8 2 6 15q-2-6-6-8z" fill="${H}"/>`, coque:`<circle cx="22" cy="2" r="4.5" fill="${H}"/>`, chanel:`<path d="M12 13q-1-12 10-12t10 12v6q-2 1-3 0v-9q-7-3-14 0v9q-1 1-3 0z" fill="${H}"/>`})[k.style] : "";
+  const front = ({
+    curto:`<path d="M13.5 10q0-8.5 8.5-8.5t8.5 8.5q-3-3.5-8.5-3.5t-8.5 3.5z" fill="${H}"/>`,
+    lado:`<path d="M13.5 11q-1-10 8.5-10t8.5 8q-6-3.5-11.5-.5-2 1.5-5.5 2.5z" fill="${H}"/>`,
+    cacheado:`<g fill="${H}"><circle cx="15" cy="6" r="3.6"/><circle cx="20" cy="3.6" r="3.8"/><circle cx="25" cy="3.8" r="3.8"/><circle cx="29.5" cy="7" r="3.4"/></g>`,
+    raspado:`<path d="M14 9q1-7 8-7t8 7q-8-2.4-16 0z" fill="${H}" opacity=".85"/>`,
+    topete:`<path d="M13.5 10q0-6 5-8 5-3 10-.5 3 2 2 8.5-2-4-8.5-3.5t-8.5 3.5z" fill="${H}"/><path d="M19 2q4-3 8 0-3 0-8 0z" fill="${H}"/>`,
+    longo:`<path d="M13.5 11q0-10 8.5-10t8.5 10q-4-5-8.5-5-3.5 2.5-8.5 5z" fill="${H}"/>`,
+    coque:`<path d="M13.5 10.5q0-9 8.5-9t8.5 9q-4-3.5-8.5-3.5t-8.5 3.5z" fill="${H}"/>`,
+    rabo:`<path d="M13.5 10.5q0-9 8.5-9t8.5 9q-4-3.5-8.5-3.5t-8.5 3.5z" fill="${H}"/>`,
+    chanel:`<path d="M13.5 11q0-10 8.5-10t8.5 10q-2.5-4-8.5-4.5-6 .5-8.5 4.5z" fill="${H}"/>`,
+  })[k.style] || "";
+  const legs = k.skirt ? "#3A3F4A" : k.pants;
+  return `<svg viewBox="0 0 44 70" aria-hidden="true">
+    <ellipse cx="22" cy="67" rx="12" ry="3.2" fill="rgba(0,0,0,.22)"/>
+    <g stroke="rgba(15,18,24,.42)" stroke-width=".7">
+    <g class="lgL"><rect x="15" y="44" width="6" height="20" rx="2.5" fill="${legs}"/><rect x="13.5" y="62" width="8.5" height="4.5" rx="2.2" fill="#22262C"/></g>
+    <g class="lgR"><rect x="23" y="44" width="6" height="20" rx="2.5" fill="${legs}"/><rect x="22" y="62" width="8.5" height="4.5" rx="2.2" fill="#22262C"/></g>
+    <g class="bodyg">
+      ${k.skirt ? `<path d="M13.5 41h17l3.5 12H10z" fill="${k.pants}"/>` : ""}
+      <g class="arL"><rect x="8" y="26" width="6" height="17" rx="3" fill="${sleeve}"/><circle cx="11" cy="44" r="2.7" fill="${S}"/></g>
+      <g class="arR"><rect x="30" y="26" width="6" height="17" rx="3" fill="${sleeve}"/><circle cx="33" cy="44" r="2.7" fill="${S}"/></g>
+      ${backHair}
+      <path d="M12.5 28q0-5 5-5h9q5 0 5 5v16h-19z" fill="${shirt}"/>
+      ${k.jacket ? `<path d="M12.5 28q0-5 5-5h2.5l2 9 2-9h2.5q5 0 5 5v16h-19z" fill="${k.jacket}"/><path d="M21.2 25h1.6l1 10-1.8 2-1.8-2z" fill="${k.tie}"/>` : `<path d="M19 23l3 4 3-4z" fill="rgba(255,255,255,.55)"/>`}
+      <path d="M26.5 23.2q5 .3 5 4.8v16h-4.5z" fill="rgba(0,0,0,.13)" stroke="none"/>
+      <rect x="19.5" y="19.5" width="5" height="4.5" fill="${S}"/>
+      <ellipse cx="22" cy="12.5" rx="8.3" ry="9.2" fill="${S}"/>
+      ${front}
+      <g stroke="none"><circle cx="18.6" cy="13.5" r="1.1" fill="#1B1F24"/><circle cx="25.4" cy="13.5" r="1.1" fill="#1B1F24"/><circle cx="19" cy="13.1" r=".35" fill="#fff"/><circle cx="25.8" cy="13.1" r=".35" fill="#fff"/></g>
+      ${k.g === "f" ? `<circle cx="16.5" cy="16.6" r="1.5" fill="#E58C7D" opacity=".45" stroke="none"/><circle cx="27.5" cy="16.6" r="1.5" fill="#E58C7D" opacity=".45" stroke="none"/><path d="M17.4 12.2l-1.3-.9M26.6 12.2l1.3-.9" stroke="#1B1F24" stroke-width=".8"/>` : ""}
+      <path d="M19.6 17.6q2.4 1.8 4.8 0" fill="none" stroke="#7A3B2A" stroke-width="1.1" stroke-linecap="round"/>
+      ${k.beard ? `<path d="M14 15q1 7 8 7t8-7q-2 2.6-8 2.6T14 15z" fill="${H}" opacity=".9"/>` : ""}
+      ${k.glasses ? `<g fill="rgba(255,255,255,.25)" stroke="#1B1F24" stroke-width="1"><circle cx="18.6" cy="13.5" r="2.7"/><circle cx="25.4" cy="13.5" r="2.7"/></g><path d="M21.3 13.5h1.4" stroke="#1B1F24" stroke-width="1"/>` : ""}
+      ${k.earrings ? `<circle cx="13.9" cy="16" r="1.1" fill="#E3B35A"/><circle cx="30.1" cy="16" r="1.1" fill="#E3B35A"/>` : ""}
+      ${k.cap ? `<path d="M13.2 10.5q0-9.5 8.8-9.5t8.8 9.5z" fill="${shirt}"/><path d="M29 9.6q6.5-.4 9.5 1.8l-.6 1.1H29z" fill="${shirt}" style="filter:brightness(.75)"/><circle cx="22" cy="1.6" r="1.2" fill="${shirt}"/>` : ""}
+      ${k.phones ? `<path d="M13 13a9 9 0 0 1 18 0" fill="none" stroke="#E3B35A" stroke-width="2.2"/><rect x="11" y="11" width="4" height="7" rx="1.8" fill="#1B1F24"/><rect x="29" y="11" width="4" height="7" rx="1.8" fill="#1B1F24"/>` : ""}
+    </g></g></svg>`;
+}
+/* visuais próprios dos agentes */
+const PJ_SKIN = {g:"m", skin:"#E9B98F", hair:"#2A2018", style:"lado", pants:"#23293A", glasses:true, phones:true, jacket:"#2B3A55", tie:"#7A2E2E", shirt:"#EDE6D6"};
+const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo", pants:"#6B5A7A", skirt:true, earrings:true, shirt:"#F5CFDC"}, "Patrick Jane":PJ_SKIN, "Xanax":{g:"m", skin:"#C68A5E", hair:"#1B1B1F", style:"raspado", pants:"#1F2A24", beard:true, glasses:true, phones:true, shirt:"#14532D"}};
+
+/* ---------- planta ---------- */
+/* fileira de cima: recepção, edição, design, copa · corredor · fileira de baixo: roteiro, estratégia, anúncios, métricas */
+const W = 1580, RH = 380, CORR = 110, H = RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
+const TOP = [{k:"recep", w:480}, {k:0, cols:1, w:400}, {k:2, cols:1, w:400}, {k:"copa", w:0}];
+const ROOMS = [];
+function rowRooms(list, y, db){
+  list.forEach(s => { if (s.cols && !s.w) s.w = s.cols * CELL + 56; });
+  const fixed = list.reduce((n, s) => n + (s.w || 0), 0), free = list.filter(s => !s.w);
+  free.forEach(s => s.w = (W - fixed) / free.length);
+  if (!free.length){ const extra = (W - fixed) / list.length; list.forEach(s => s.w += extra); }
+  let x = 0;
+  list.forEach(s => { ROOMS.push({key:s.k, x, y, w:s.w, h:RH, db, cols:s.cols, dx:x + s.w / 2, din:db ? y + RH - 26 : y + 26, dout:CY}); x += s.w; });
+}
+rowRooms(TOP, 0, true);
+const RECEP = ROOMS.find(r => r.key === "recep"), COPA = ROOMS.find(r => r.key === "copa");
+const AG = [];
+DEPTS.forEach((d, di) => {
+  const room = ROOMS.find(r => r.key === (d.room ?? di)); room.dept = di;
+  const cols = room.cols || 1, x0 = d.at ? room.x + d.at[0] - CELL / 2 : room.x + (room.w - cols * CELL) / 2;
+  const rowsY = room.db ? [room.y + 112, room.y + 246] : [room.y + 150, room.y + 284];
+  d.a.forEach((a, i) => {
+    const col = i % cols, row = Math.floor(i / cols), cx = x0 + col * CELL + CELL / 2, deskY = d.at ? room.y + d.at[1] : rowsY[row], seatY = deskY - 4;
+    AG.push({k:AG.length, di, n:a[0], s:a[1], v:a[2], cmd:a[3], says:a[4], c:d.c, room, deskX:cx - 6, deskY, hx:cx + 44, hy:seatY,
+      x:cx + 44, y:seatY, path:[], act:"Trabalhando", manual:0, gen:0, num:String(AG.length + 1).padStart(2, "0")});
+  });
+});
+const WALLS = [];
+function wall(x, y, w, h){ WALLS.push({x, y, w, h}); }
+ROOMS.forEach(R => {
+  const {x, y, w} = R, g0 = R.dx - DOOR / 2, g1 = R.dx + DOOR / 2, bot = y + RH - WT;
+  if (R.db){ wall(x, y, w, WT); wall(x, bot, g0 - x, WT); wall(g1, bot, x + w - g1, WT); }
+  else { wall(x, bot, w, WT); wall(x, y, g0 - x, WT); wall(g1, y, x + w - g1, WT); }
+  wall(x, y, WT, RH); wall(x + w - WT, y, WT, RH);
+});
+wall(0, RH, WT, CORR); wall(W - WT, RH, WT, CORR); wall(0, H - WT, W, WT);
+
+/* ---------- móveis (SVG próprios) ---------- */
+const SH = (cx, cy, rx) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="3.5" fill="rgba(0,0,0,.22)"/>`;
+const rep = (n, f) => Array.from({length:n}, (_, i) => f(i)).join("");
+const FUR = {
+  plant:[40, 58, `<svg viewBox="0 0 40 58">${SH(20, 55, 13)}<g fill="#2F7A47"><ellipse cx="20" cy="20" rx="6" ry="17"/><ellipse cx="10" cy="26" rx="5" ry="13" transform="rotate(-32 10 26)"/><ellipse cx="30" cy="26" rx="5" ry="13" transform="rotate(32 30 26)"/></g><g fill="#4FA866"><ellipse cx="15" cy="18" rx="3.6" ry="12" transform="rotate(-16 15 18)"/><ellipse cx="26" cy="17" rx="3.6" ry="12" transform="rotate(18 26 17)"/></g><path d="M10 37h20l-3 17H13z" fill="#C46A3E"/><rect x="8.5" y="35" width="23" height="5" rx="2.2" fill="#DA8857"/></svg>`],
+  tree:[36, 80, `<svg viewBox="0 0 36 80">${SH(18, 77, 12)}<path d="M18 60V14" stroke="#6B4A2B" stroke-width="2"/><g fill="#3E8B56"><ellipse cx="11" cy="20" rx="7" ry="9" transform="rotate(-30 11 20)"/><ellipse cx="25" cy="14" rx="7" ry="9" transform="rotate(30 25 14)"/><ellipse cx="10" cy="36" rx="7" ry="9" transform="rotate(-40 10 36)"/><ellipse cx="26" cy="32" rx="7" ry="9" transform="rotate(35 26 32)"/><ellipse cx="18" cy="7" rx="6" ry="8"/><ellipse cx="12" cy="50" rx="6" ry="8" transform="rotate(-45 12 50)"/></g><g fill="#5DB477" opacity=".7"><ellipse cx="23" cy="13" rx="3" ry="5" transform="rotate(30 23 13)"/><ellipse cx="9" cy="35" rx="3" ry="5" transform="rotate(-40 9 35)"/></g><path d="M8 60h20l-2 16H10z" fill="#EFE9DD"/><rect x="7" y="58" width="22" height="4" rx="2" fill="#FAF6EE"/></svg>`],
+  sofa:[110, 60, `<svg viewBox="0 0 110 60">${SH(55, 57, 54)}<rect x="6" y="4" width="98" height="30" rx="10" style="fill:var(--sofa)"/><rect x="6" y="4" width="98" height="30" rx="10" fill="rgba(0,0,0,.2)"/><rect x="14" y="26" width="41" height="22" rx="6" style="fill:var(--sofa)"/><rect x="55" y="26" width="41" height="22" rx="6" style="fill:var(--sofa)"/><rect x="14" y="26" width="82" height="4" rx="2" fill="rgba(255,255,255,.2)"/><rect x="0" y="18" width="17" height="36" rx="7" style="fill:var(--sofa)"/><rect x="93" y="18" width="17" height="36" rx="7" style="fill:var(--sofa)"/><rect x="0" y="18" width="17" height="36" rx="7" fill="rgba(0,0,0,.1)"/><rect x="93" y="18" width="17" height="36" rx="7" fill="rgba(0,0,0,.1)"/><rect x="20" y="11" width="20" height="17" rx="5" fill="#E8C468" transform="rotate(-8 30 19)"/><rect x="72" y="11" width="20" height="17" rx="5" fill="#F2EEE4" transform="rotate(7 82 19)"/></svg>`],
+  balcao:[150, 76, `<svg viewBox="0 0 150 76">${SH(75, 73, 74)}<rect x="104" y="0" width="32" height="20" rx="2" fill="#1A1F25"/><rect x="106" y="2" width="28" height="15" fill="#2E5A70"/><rect x="117" y="20" width="6" height="4" fill="#1A1F25"/><rect x="0" y="22" width="150" height="14" rx="4" fill="#EFE8DA"/><rect x="2" y="23" width="146" height="2" rx="1" fill="#fff" opacity=".7"/><rect x="3" y="34" width="144" height="38" rx="3" style="fill:var(--c-recep)"/><rect x="3" y="34" width="144" height="5" fill="rgba(0,0,0,.18)"/><text x="75" y="62" text-anchor="middle" font-family="Big Shoulders Display,Arial Narrow,sans-serif" font-weight="900" font-size="17" letter-spacing="1.5" fill="#fff">MATRIX CODE</text><circle cx="30" cy="27" r="5" fill="#E8C468"/><rect x="42" y="25" width="20" height="4" rx="1" fill="#6B7280"/></svg>`],
+  logorug:[130, 84, `<svg viewBox="0 0 130 84"><ellipse cx="65" cy="42" rx="63" ry="40" fill="#0F2A1C" stroke="#22C55E" stroke-width="3"/><ellipse cx="65" cy="42" rx="54" ry="32" fill="none" stroke="#22C55E" stroke-width="1" stroke-dasharray="3 4" opacity=".7"/><text x="65" y="53" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-weight="500" font-size="30" fill="#4ADE80">&lt;/&gt;</text></svg>`],
+  cooler:[28, 64, `<svg viewBox="0 0 28 64">${SH(14, 61, 11)}<path d="M6 4q0-4 8-4t8 4v16H6z" fill="#9FD3EC" opacity=".9"/><rect x="9" y="3" width="10" height="3" rx="1" fill="#fff" opacity=".6"/><rect x="4" y="20" width="20" height="40" rx="3" fill="#E6E9EE"/><rect x="8" y="27" width="5" height="4" rx="1" fill="#3B82F6"/><rect x="15" y="27" width="5" height="4" rx="1" fill="#E5533D"/><rect x="7" y="35" width="14" height="2" fill="#B8BEC8"/></svg>`],
+  mesinha:[54, 34, `<svg viewBox="0 0 54 34">${SH(27, 31, 25)}<rect x="7" y="16" width="4" height="14" fill="#5E3F28"/><rect x="43" y="16" width="4" height="14" fill="#5E3F28"/><rect x="2" y="8" width="50" height="11" rx="5" fill="#8A5D3B"/><rect x="2" y="8" width="50" height="4" rx="2" fill="#B07D52"/><rect x="13" y="0" width="8" height="10" rx="2" fill="#F2EEE4"/><rect x="29" y="4" width="15" height="5" rx="1" fill="#E5533D"/></svg>`],
+  painel:[170, 46, `<svg viewBox="0 0 170 46">${rep(6, i => `<g transform="translate(${i * 28 + 1} 2)"><rect width="26" height="40" rx="2" fill="${i % 2 ? "#2B2F38" : "#3A3F4B"}"/>${rep(4, j => `<rect x="3" y="${3 + j * 9.5}" width="20" height="5" rx="2" fill="rgba(255,255,255,.08)"/>`)}</g>`)}</svg>`],
+  estante:[84, 82, `<svg viewBox="0 0 84 82">${SH(42, 79, 40)}<rect x="0" y="0" width="84" height="78" rx="3" fill="#6B4A2E"/><rect x="4" y="4" width="76" height="70" fill="#3E2A1A"/><rect x="4" y="26" width="76" height="3" fill="#6B4A2E"/><rect x="4" y="50" width="76" height="3" fill="#6B4A2E"/>${["#E5533D","#3FB27F","#F0B83C","#2F6FD6","#8E7CF0","#E5533D","#2FB5C8","#F2EEE4","#D94F8A"].map((c, i) => `<rect x="${6 + i * 8}" y="${8 + (i % 3)}" width="6.5" height="${18 - (i % 3)}" rx="1" fill="${c}"/>`).join("")}${rep(4, i => `<rect x="${7 + i * 18}" y="34" width="15" height="14" rx="2" fill="#1B1F24"/><circle cx="${11 + i * 18}" cy="44" r="1.2" fill="${i % 2 ? "#4CC38A" : "#7FE3F0"}"/>`)}${rep(3, i => `<circle cx="${17 + i * 25}" cy="64" r="9" fill="#2B2F38"/><circle cx="${17 + i * 25}" cy="64" r="3" fill="#9AA3AD"/>`)}</svg>`],
+  ring:[64, 110, `<svg viewBox="0 0 64 110">${SH(32, 106, 26)}<path d="M32 60L12 104M32 60l20 44M32 60v44" stroke="#2B2F38" stroke-width="2.5"/><rect x="30.5" y="28" width="3" height="34" fill="#2B2F38"/><circle cx="32" cy="22" r="19" fill="none" stroke="#FFF3D1" stroke-width="6"/><circle cx="32" cy="22" r="19" fill="none" stroke="#fff" stroke-width="2"/><rect x="24" y="16" width="16" height="11" rx="2" fill="#1B1F24"/><circle cx="32" cy="21.5" r="3.6" fill="#3A4C66" stroke="#0E1116"/><circle cx="37" cy="18" r="1" fill="#E5533D"/></svg>`],
+  abajur:[34, 96, `<svg viewBox="0 0 34 96">${SH(17, 93, 11)}<rect x="9" y="88" width="16" height="4" rx="2" fill="#2B2F38"/><rect x="15.8" y="22" width="2.4" height="68" fill="#2B2F38"/><path d="M5 22L10 2h14l5 20z" fill="#F4E3B5"/><path d="M5 22h24" stroke="#D9C38A" stroke-width="2"/></svg>`],
+  cozinha:[196, 74, `<svg viewBox="0 -8 196 74">${SH(98, 63, 96)}<rect x="0" y="22" width="196" height="40" rx="2" fill="#E9E4DA"/><g fill="#D6CFC2">${rep(4, i => `<rect x="${4 + i * 48}" y="30" width="44" height="29" rx="2"/>`)}</g><g fill="#8A8F98">${rep(4, i => `<rect x="${20 + i * 48}" y="34" width="12" height="2" rx="1"/>`)}</g><rect x="0" y="16" width="196" height="9" rx="2" fill="#3A3F48"/><rect x="0" y="16" width="196" height="2" fill="#5A606B"/><rect x="14" y="-6" width="30" height="24" rx="3" fill="#2B2F38"/><rect x="18" y="-2" width="22" height="6" rx="1" fill="#7FE3F0" opacity=".75"/><rect x="25" y="8" width="9" height="8" rx="1.5" fill="#F2EEE4"/><rect x="80" y="17" width="34" height="6" rx="2" fill="#AEB4BE"/><path d="M96 17V8h8" stroke="#AEB4BE" stroke-width="2.5" fill="none"/><ellipse cx="150" cy="14" rx="14" ry="5" fill="#C46A3E"/><circle cx="144" cy="9" r="4.5" fill="#E5533D"/><circle cx="152" cy="8" r="4.5" fill="#F0B83C"/><circle cx="158" cy="10" r="4" fill="#4FA866"/><rect x="172" y="6" width="7" height="10" rx="1.5" fill="#F2EEE4"/><rect x="181" y="8" width="7" height="8" rx="1.5" style="fill:var(--c-copa)"/></svg>`],
+  geladeira:[52, 90, `<svg viewBox="0 0 52 90">${SH(26, 87, 25)}<rect x="2" y="0" width="48" height="86" rx="5" fill="#E3E7EC" stroke="#C3C9D2"/><rect x="2" y="30" width="48" height="2" fill="#C3C9D2"/><rect x="40" y="10" width="3" height="14" rx="1.5" fill="#9AA1AC"/><rect x="40" y="38" width="3" height="20" rx="1.5" fill="#9AA1AC"/><circle cx="14" cy="14" r="4" fill="#E5533D"/><rect x="10" y="44" width="13" height="10" fill="#F2EEE4" transform="rotate(-6 16 48)"/><circle cx="30" cy="50" r="3" fill="#3FB27F"/></svg>`],
+  mesa:[120, 78, `<svg viewBox="0 0 120 78">${SH(60, 72, 56)}<ellipse cx="22" cy="22" rx="11" ry="5" style="fill:var(--c-copa)"/><ellipse cx="98" cy="22" rx="11" ry="5" style="fill:var(--c-copa)"/><rect x="57" y="34" width="6" height="30" fill="#5E3F28"/><ellipse cx="60" cy="66" rx="16" ry="4" fill="#5E3F28"/><ellipse cx="60" cy="31" rx="46" ry="16" fill="#9C6B43"/><ellipse cx="60" cy="28" rx="46" ry="15" fill="#C9965F"/><rect x="42" y="19" width="8" height="9" rx="2" fill="#F2EEE4"/><ellipse cx="72" cy="28" rx="10" ry="3.6" fill="#fff"/><path d="M66 27l6-7 6 7z" fill="#E8C468"/>${[22, 98].map(x => `<rect x="${x - 6}" y="56" width="3" height="16" fill="#3A3F48"/><rect x="${x + 3}" y="56" width="3" height="16" fill="#3A3F48"/><ellipse cx="${x}" cy="55" rx="12" ry="5.5" style="fill:var(--c-copa)"/><ellipse cx="${x}" cy="54" rx="12" ry="4.5" fill="rgba(255,255,255,.2)"/>`).join("")}</svg>`],
+  vaca:[44, 34, `<svg viewBox="0 0 44 34"><rect width="44" height="34" rx="2" fill="#2B2F38"/><rect x="3" y="3" width="38" height="28" fill="#F2EEE4"/><path d="M12 12l-5-3M32 12l5-3" stroke="#24272D" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="22" cy="18" rx="9" ry="8.5" fill="#fff" stroke="#24272D"/><circle cx="17" cy="13" r="3" fill="#24272D"/><ellipse cx="22" cy="23" rx="6" ry="3.8" fill="#E9A3A0"/><circle cx="19" cy="16" r="1.2" fill="#24272D"/><circle cx="25" cy="16" r="1.2" fill="#24272D"/></svg>`],
+  onda:[44, 34, `<svg viewBox="0 0 44 34"><rect width="44" height="34" rx="2" fill="#2B2F38"/><rect x="3" y="3" width="38" height="28" fill="#1E3A4C"/>${[6, 12, 20, 9, 16, 22, 11, 6].map((h, i) => `<rect x="${7 + i * 4}" y="${17 - h / 2}" width="2.4" height="${h}" rx="1" fill="#F0B83C"/>`).join("")}</svg>`],
+  neon:[124, 40, `<svg viewBox="0 0 124 40"><rect x="1" y="1" width="122" height="38" rx="8" fill="#14181F"/><text x="62" y="27" text-anchor="middle" font-family="Big Shoulders Display,Arial Narrow,sans-serif" font-weight="900" font-size="16" letter-spacing="1.5" fill="#C9FFD9" style="filter:drop-shadow(0 0 2px #22C55E) drop-shadow(0 0 6px #22C55E)">MATRIX CODE</text></svg>`],
+  chefe:[160, 90, `<svg viewBox="0 0 160 90">${SH(80, 86, 78)}<rect x="56" y="0" width="48" height="34" rx="9" fill="#1F2A24"/><rect x="60" y="4" width="40" height="20" rx="6" fill="#2C3B33"/><path d="M18 30l5-18h36l5 18z" fill="#2B2F38"/><rect x="25" y="14" width="32" height="13" fill="#4ADE80" opacity=".55"/><rect x="132" y="12" width="3" height="18" fill="#2B2F38"/><path d="M124 13h20l-4-8h-12z" fill="#16A34A"/><rect x="104" y="21" width="8" height="9" rx="2" fill="#F2EEE4"/><rect x="78" y="24" width="18" height="6" fill="#fff" transform="rotate(-5 87 27)"/><rect x="0" y="30" width="160" height="16" rx="4" fill="#5E3F28"/><rect x="0" y="30" width="160" height="4" rx="2" fill="#8A5D3B"/><rect x="4" y="44" width="152" height="40" rx="3" fill="#4A321F"/><rect x="56" y="54" width="48" height="13" rx="2" fill="#C9A227"/><text x="80" y="63.5" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7.5" font-weight="500" fill="#2B1D10" letter-spacing="1">DIRETORIA</text></svg>`],
+  arquivo:[44, 80, `<svg viewBox="0 0 44 80">${SH(22, 77, 21)}<rect x="2" y="8" width="40" height="68" rx="2" fill="#9AA3AD"/>${rep(3, i => `<rect x="5" y="${12 + i * 21}" width="34" height="18" rx="1.5" fill="#B8C0C9"/><rect x="17" y="${19 + i * 21}" width="10" height="3" rx="1" fill="#6B7280"/>`)}<rect x="5" y="1" width="22" height="8" fill="#fff" transform="rotate(-5 16 5)"/><rect x="15" y="2" width="22" height="7" fill="#F4E3B5"/></svg>`],
+  rack:[44, 100, `<svg viewBox="0 0 44 100">${SH(22, 97, 21)}<rect x="1" y="0" width="42" height="95" rx="3" fill="#15191F"/><rect x="4" y="3" width="36" height="89" fill="#0B0E12"/>${rep(8, i => `<rect x="6" y="${6 + i * 11}" width="32" height="8" rx="1" fill="#1E242C"/><circle class="led" style="animation-delay:${(i * .37) % 1.3}s" cx="10" cy="${10 + i * 11}" r="1.3" fill="#4ADE80"/><circle class="led" style="animation-delay:${(i * .61) % 1.1}s" cx="14" cy="${10 + i * 11}" r="1.3" fill="${i % 3 ? "#4ADE80" : "#F0B83C"}"/><rect x="20" y="${9 + i * 11}" width="15" height="2" fill="#2B333D"/>`)}</svg>`],
+  quadro:[100, 60, `<svg viewBox="0 0 100 60"><rect width="100" height="60" rx="3" fill="#9AA3AD"/><rect x="3" y="3" width="94" height="54" fill="#F7FAF8"/><g fill="none" stroke="#16A34A" stroke-width="1.6"><rect x="10" y="10" width="20" height="12" rx="2"/><rect x="40" y="10" width="20" height="12" rx="2"/><rect x="70" y="10" width="20" height="12" rx="2"/><path d="M30 16h10M60 16h10"/></g><g stroke="#2F6FD6" stroke-width="1.4"><path d="M10 32h30M10 38h46M14 44h24M14 50h34"/></g><path d="M66 32l8 8-8 8" fill="none" stroke="#E5533D" stroke-width="2"/></svg>`],
+  pufe:[56, 44, `<svg viewBox="0 0 56 44">${SH(28, 41, 26)}<path d="M6 34q-6-20 10-28 12-6 24 0 16 8 10 28-8 6-22 6T6 34z" fill="#166534"/><path d="M14 14q8-6 18-3" stroke="rgba(255,255,255,.25)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`],
+  telao:[150, 62, `<svg viewBox="0 0 150 62"><rect width="150" height="62" rx="4" fill="#0B0E12"/></svg><canvas class="rain" width="288" height="112" style="position:absolute;left:3px;top:3px;width:144px;height:56px;border-radius:2px"></canvas>`],
+  banco:[96, 30, `<svg viewBox="0 0 96 30">${SH(48, 27, 46)}<rect x="8" y="12" width="4" height="14" fill="#3A3F48"/><rect x="84" y="12" width="4" height="14" fill="#3A3F48"/>${rep(3, i => `<rect x="2" y="${2 + i * 4}" width="92" height="3.2" rx="1.5" fill="${i % 2 ? "#9C6B43" : "#B07D52"}"/>`)}</svg>`],
+};
+function fur(name, x, y, g, o = {}){
+  const [w, h, svg] = FUR[name];
+  return `<span class="fur${o.lit ? " lit" : ""}" data-g="${g}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${o.z ?? Math.round(y + h - 6)}">${svg}</span>`;
+}
+const glow = (x, y, r, g, c) => `<span class="glow" data-g="${g || ""}" style="left:${x - r}px;top:${y - r}px;width:${r * 2}px;height:${r * 2}px${c ? `;--g:${c}` : ""}"></span>`;
+
+/* ---------- desenhar ---------- */
+const world = $("#world");
+world.style.width = W + "px"; world.style.height = H + "px";
+const ED = ROOMS.find(r => r.key === 0);
+let html = `<div class="corr" style="left:0;top:${RH}px;width:${W}px;height:${CORR}px"></div><span class="corrlbl" style="left:80px;top:${CY - 7}px">CORREDOR</span>`;
+ROOMS.forEach((R, i) => {
+  html += `<div class="room" data-room="${i}" style="left:${R.x}px;top:${R.y}px;width:${R.w}px;height:${RH}px"><span class="rug"></span><span class="plaque"><i></i><b></b></span></div>`;
+  [.27, .73].forEach(f => { const wx = R.x + R.w * f - 36; html += `<span class="win" style="left:${wx}px;width:72px"></span><span class="beam" style="left:${wx - 20}px;width:150px"></span>`; });
+  html += glow(R.x + R.w / 2, R.y + RH * .55, Math.min(R.w, RH) * .55, "", "rgba(255,214,150,.42)");
+});
+WALLS.forEach(w => html += `<div class="wall" style="left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px"></div>`);
+/* sua sala */
+html += fur("logorug", RECEP.x + 170, RECEP.y + 186, "tapetes", {z:3}) + fur("chefe", RECEP.x + 26, RECEP.y + 30, "moveis") + fur("neon", RECEP.x + 186, RECEP.y + 14, "quadros", {lit:true, z:4})
+  + fur("arquivo", RECEP.x + 418, RECEP.y + 26, "moveis") + fur("sofa", RECEP.x + 14, RECEP.y + 268, "moveis") + fur("mesinha", RECEP.x + 136, RECEP.y + 292, "moveis")
+  + fur("tree", RECEP.x + 432, RECEP.y + 270, "plantas") + fur("cooler", RECEP.x + 440, RECEP.y + 180, "moveis")
+  + glow(RECEP.x + 248, RECEP.y + 40, 70, "quadros", "rgba(90,255,140,.5)") + glow(RECEP.x + 120, RECEP.y + 70, 80, "moveis");
+/* edição */
+html += fur("painel", ED.x + ED.w / 2 - 85, ED.y + 12, "estudio", {z:4}) + fur("estante", ED.x + 18, ED.y + 14, "estudio") + fur("vaca", ED.x + 112, ED.y + 16, "quadros", {z:4})
+  + fur("ring", ED.x + ED.w - 82, ED.y + 30, "estudio", {lit:true}) + fur("abajur", ED.x + 22, ED.y + 196, "moveis", {lit:true}) + fur("tree", ED.x + ED.w - 50, ED.y + 252, "plantas")
+  + fur("onda", ED.x + ED.w - 140, ED.y + 16, "quadros", {z:4})
+  + glow(ED.x + ED.w - 50, ED.y + 56, 90, "estudio", "rgba(255,246,220,.6)") + glow(ED.x + 39, ED.y + 210, 80, "moveis");
+/* programação */
+const PG = ROOMS.find(r => r.key === 2);
+html += fur("telao", PG.x + PG.w / 2 - 75, PG.y + 10, "estudio", {lit:true, z:4}) + fur("rack", PG.x + 18, PG.y + 14, "estudio", {lit:true}) + fur("rack", PG.x + 64, PG.y + 14, "estudio", {lit:true})
+  + fur("quadro", PG.x + PG.w - 116, PG.y + 14, "quadros", {z:4}) + fur("pufe", PG.x + 26, PG.y + 250, "moveis") + fur("pufe", PG.x + 86, PG.y + 262, "moveis")
+  + fur("tree", PG.x + PG.w - 50, PG.y + 252, "plantas") + fur("abajur", PG.x + PG.w - 44, PG.y + 120, "moveis", {lit:true})
+  + glow(PG.x + PG.w / 2, PG.y + 50, 110, "estudio", "rgba(90,255,140,.55)") + glow(PG.x + 64, PG.y + 60, 70, "estudio", "rgba(90,255,140,.4)") + glow(PG.x + PG.w - 27, PG.y + 134, 80, "moveis");
+/* copa */
+html += fur("cozinha", COPA.x + 14, COPA.y + 10, "moveis") + fur("geladeira", COPA.x + COPA.w - 66, COPA.y + 12, "moveis") + fur("mesa", COPA.x + COPA.w / 2 - 60, COPA.y + 160, "moveis")
+  + fur("plant", COPA.x + 18, COPA.y + 290, "plantas") + fur("plant", COPA.x + COPA.w - 54, COPA.y + 290, "plantas")
+  + glow(COPA.x + 44, COPA.y + 30, 60, "moveis", "rgba(127,227,240,.4)") + glow(COPA.x + COPA.w / 2, COPA.y + 190, 90, "moveis");
+/* corredor */
+html += fur("banco", ED.x + 70, RH + 76, "moveis") + fur("banco", PG.x + 230, RH + 76, "moveis") + fur("plant", ED.x + ED.w - 20, RH + 24, "plantas") + fur("plant", 14, RH + 24, "plantas") + fur("plant", W - 54, RH + 24, "plantas")
+  + rep(8, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
+AG.forEach(a => {
+  html += `<span class="chair" style="left:${a.hx - 16}px;top:${a.hy - 32}px;z-index:${Math.round(a.hy) - 2}"></span>`;
+  html += `<span class="desk on" id="desk${a.k}" style="left:${a.deskX - 75}px;top:${a.deskY}px;z-index:${Math.round(a.deskY + 34)};--c:${a.c}">${a.s === "papers" ? `<span class="mon"><span class="screen s-text">${SCREENS.text}</span></span><span class="top"></span>${[[66,26],[84,34],[102,18]].map(([l, h]) => `<span class="pile" style="left:${l}px;--h:${h}px"></span>`).join("")}${[[12,6,-9],[34,10,7],[118,4,-4],[128,12,11],[52,14,-3]].map(([l, tp, r]) => `<span class="sheet" style="left:${l}px;top:${tp}px;transform:rotate(${r}deg)"></span>`).join("")}<span class="pens"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>` : `<span class="mon"><span class="screen s-${a.s}">${SCREENS[a.s]}</span></span><span class="mon mon2"><span class="screen ${a.s === "matrix" ? "s-term" : "s-tl"}">${a.s === "matrix" ? "<i></i><i></i><i></i><i></i>" : "<i></i><i></i><i></i><b></b>"}</span></span><span class="top"></span><span class="kbd"></span><span class="mug"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>`}`;
+  html += glow(a.deskX - 20, a.deskY - 6, 80, "", a.s === "matrix" ? "rgba(90,255,140,.55)" : "rgba(127,227,240,.5)");
+});
+world.innerHTML = html;
+
+/* ---------- personalização (fica salva só neste navegador) ---------- */
+const SHIRTS = ["#16A34A","#14532D","#C78A1E","#E5533D","#3FB27F","#2F6FD6","#8E7CF0","#D94F8A","#2FB5C8","#F2EEE4","#6B7280","#1B1F24"];
+const PANTS = ["#2F3A4F","#23293A","#3B3B3B","#4E3B2F","#264A5E","#6B7280","#C9B48A","#7A2E2E"];
+const JACKETS = ["#2B3A55","#3B3B3B","#6B4E31","#2E5E4E","#7A2E2E","#C9B48A"];
+const TIES = ["#7A2E2E","#1B1F24","#C78A1E","#2F6FD6","#3FB27F"];
+const ROOMC = ["#22C55E","#14B8A6","#4ADE80","#84CC16","#D9A13B","#3FB27F","#E5533D","#8E7CF0","#2FB5C8","#F08A3C","#D94F8A","#9AA3AD"];
+const SOFAS = ["#166534","#3F6E8C","#7A2E2E","#3FB27F","#C78A1E","#6B7280","#8E7CF0","#2B2F38"];
+const FLOORS = {madeira:"Madeira clara", nogueira:"Madeira escura", ceramica:"Cerâmica", carpete:"Carpete", concreto:"Cimento", xadrez:"Xadrez"};
+const DECO = {plantas:"🪴 Plantas", tapetes:"🐄 Tapetes", quadros:"🖼️ Quadros e neon", estudio:"🎙️ Equipamento", moveis:"🛋️ Móveis"};
+const LIGHTS = {dia:"☀️ Dia", tarde:"🌇 Fim de tarde", noite:"🌙 Noite"};
+const STYLE_N = {curto:"Curto", lado:"De lado", cacheado:"Cacheado", raspado:"Raspado", topete:"Topete", longo:"Longo", coque:"Coque", rabo:"Rabo", chanel:"Chanel"};
+const oldMe = store.get("torre-eu-skin", 0);
+function cfgDefault(){
+  return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:3,
+    light:"dia", names:false, fast:false, roam:false, title:"Matrix Code", sofa:"#166534",
+    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
+    deco:{plantas:true, tapetes:true, quadros:true, estudio:true, moveis:true}};
+}
+const CFG = (() => { const d = cfgDefault(), s = store.get("torre-cfg", {}) || {};
+  if (s.pj){ s.ag = {...(s.ag || {}), "Patrick Jane":s.pj}; } delete s.pj;
+  if (s.v !== 2 && s.v !== 3){ delete s.title; delete s.rooms; delete s.sofa; if (s.me && s.me.shirt === "#C78A1E") delete s.me.shirt; }
+  if (s.v !== 3 && s.rooms){ if (s.rooms[1]){ s.rooms[2] = s.rooms[1]; delete s.rooms[1]; } if (s.rooms.recep?.name === "Recepção") s.rooms.recep.name = "Sua sala"; }
+  s.v = 3;
+  const c = {...d, ...s, me:{...d.me, ...(s.me || {})}, rooms:{}, deco:{...d.deco, ...(s.deco || {})}};
+  for (const k in d.rooms) c.rooms[k] = {...d.rooms[k], ...(s.rooms?.[k] || {})};
+  return c; })();
+const roomName = R => CFG.rooms[R.key]?.name || "";
+const agSkin = a => CFG.ag[a.n] || AG_SKIN[a.n] || skinFor(a.k, "m");
+function applyCfg(){
+  store.set("torre-cfg", CFG);
+  $("h1").textContent = CFG.title.trim() || "Matrix Code";
+  world.dataset.light = CFG.light;
+  world.classList.toggle("names", CFG.names);
+  for (const g in DECO) world.classList.toggle("no-" + g, !CFG.deco[g]);
+  world.style.setProperty("--sofa", CFG.sofa);
+  ROOMS.forEach((R, i) => {
+    const rc = CFG.rooms[R.key], el = world.querySelector(`[data-room="${i}"]`);
+    el.dataset.floor = rc.floor; el.style.setProperty("--c", rc.c); el.querySelector(".plaque b").textContent = rc.name;
+    world.style.setProperty("--c-" + R.key, rc.c);
+  });
+  AG.forEach(a => { a.c = CFG.rooms[a.room.key].c; a.desk.style.setProperty("--c", a.c); a.skin = agSkin(a); reskin(a); });
+  P.el.querySelector(".flipper").innerHTML = spriteSVG(CFG.me, CFG.me.shirt); P.el.querySelector(".nm").textContent = CFG.me.name.trim() || "Você";
+  $("#legend").innerHTML = DEPTS.map((d, i) => { const rc = CFG.rooms[ROOMS.find(r => r.dept === i).key]; return `<button data-dept="${i}" style="--c:${rc.c}"><i></i>${esc(rc.name)} <small>${d.a.length}</small></button>`; }).join("") + `<button data-copa="1" style="--c:${CFG.rooms.copa.c}"><i></i>${esc(CFG.rooms.copa.name)}</button>`;
+}
+
+AG.forEach(a => {
+  a.skin = agSkin(a);
+  const el = document.createElement("button");
+  el.className = "sp sit"; el.dataset.k = a.k; el.setAttribute("aria-label", a.n);
+  el.innerHTML = `<span class="flipper">${spriteSVG(a.skin, a.c)}</span><span class="nm">${esc(a.n)}</span>`;
+  world.appendChild(el); a.el = el; a.desk = $("#desk" + a.k); place(a);
+});
+function place(o){ o.el.style.transform = `translate(${o.x - 22}px,${o.y - 66}px)`; o.el.style.zIndex = Math.round(o.y); }
+function reskin(a){ a.el.querySelector(".flipper").innerHTML = spriteSVG(a.skin, a.c); }
+
+/* ---------- rotas ---------- */
+function roomAt(x, y){ return ROOMS.findIndex(R => x > R.x + 2 && x < R.x + R.w - 2 && y > R.y + 2 && y < R.y + RH - 2); }
+function route(fx, fy, tx, ty){
+  const pts = [], fr = roomAt(fx, fy), tr = roomAt(tx, ty);
+  if (fr >= 0 && fr === tr) return [[tx, ty]];
+  if (fr >= 0){ const R = ROOMS[fr]; pts.push([R.dx, R.din], [R.dx, CY]); }
+  else pts.push([fx, CY]);
+  if (tr >= 0){ const R = ROOMS[tr]; pts.push([R.dx, CY], [R.dx, R.din], [tx, ty]); }
+  else pts.push([tx, CY], [tx, ty]);
+  return pts;
+}
+
+/* ---------- movimento dos agentes ---------- */
+const ABORT = Symbol();
+const SPEED = 95;
+function check(o, g){ if (o.gen !== g) throw ABORT; }
+function goPath(o, pts, g){ return new Promise((res, rej) => { o.path = pts.slice(); o.onArrive = res; o.onAbort = rej; o.pathGen = g; o.el.classList.remove("sit"); if (o.desk) o.desk.classList.remove("on"); }); }
+async function walkTo(o, x, y, g){ check(o, g); await goPath(o, route(o.x, o.y, x, y), g); check(o, g); }
+function stepAll(dt){
+  for (const o of [...AG, P]){
+    if (!o.path || !o.path.length){ if (o !== P || !P.keyMove) o.el.classList.remove("walk"); continue; }
+    if (o.gen !== o.pathGen){ o.path = []; o.onAbort?.(ABORT); continue; }
+    const [tx, ty] = o.path[0], dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy), step = (o === P ? 150 : SPEED) * dt * (CFG.fast ? 1.7 : 1);
+    if (d <= step){ o.x = tx; o.y = ty; o.path.shift(); if (!o.path.length){ o.el.classList.remove("walk"); const f = o.onArrive; o.onArrive = null; f?.(); } }
+    else { o.x += dx / d * step; o.y += dy / d * step; o.el.classList.add("walk"); if (Math.abs(dx) > 1) o.el.classList.toggle("flip", dx < 0); }
+    place(o);
+  }
+}
+function setAct(a, t){ a.act = t; if (selK === a.k && mode === "req"){ const s = $("#cardStatus"); if (s) s.textContent = t; } }
+function bubble(o, t, ms = 2800){ o.el.querySelector(".bub")?.remove(); const b = document.createElement("span"); b.className = "bub"; b.textContent = t; o.el.appendChild(b); setTimeout(() => b.remove(), ms); }
+const R = {
+  async work(a, g){ setAct(a, "Voltando para a mesa"); await walkTo(a, a.hx, a.hy, g); a.el.classList.add("sit"); a.el.classList.remove("flip"); a.desk.classList.add("on"); setAct(a, "Trabalhando: " + pick(a.says)); },
+  async cafe(a, g){ setAct(a, "Indo para a copa"); await walkTo(a, COPA.x + 40 + Math.random() * (COPA.w - 80), COPA.y + 110 + Math.random() * 160, g); setAct(a, "Tomando café ☕"); bubble(a, pick(["☕ Café fresquinho","Só um cafezinho","Recarregando…"])); await sleep(5000); check(a, g); return R.work(a, g); },
+  async visit(a, g, b){
+    b = b || pick(AG.filter(x => x !== a)); if (!b) return R.stretch(a, g);
+    setAct(a, `Indo falar com ${b.n}`);
+    await walkTo(a, b.hx - 34, b.hy + 26, g); a.el.classList.remove("flip");
+    setAct(a, `Conversando com ${b.n}`);
+    bubble(a, pick(CHAT)); await sleep(2400); check(a, g);
+    bubble(b, pick(["Tá saindo!","Daqui a pouco te mando","Boa ideia!","Vamos nessa","Show!"])); await sleep(2400); check(a, g);
+    bubble(a, "👍"); await sleep(1000); return R.work(a, g);
+  },
+  async wave(a, g){ a.el.classList.add("wave"); bubble(a, pick(["Oi! 👋","Opa, tudo certo?","Tô por aqui!"])); await sleep(2200); a.el.classList.remove("wave"); check(a, g); if (a.x !== a.hx || a.y !== a.hy) return R.work(a, g); },
+  async stretch(a, g){ setAct(a, "Esticando as pernas"); const Rm = a.room; await walkTo(a, Rm.x + 40 + Math.random() * (Rm.w - 80), Rm.y + 80 + Math.random() * (RH - 150), g); await sleep(1600); check(a, g); return R.work(a, g); },
+  async report(a, g){
+    setAct(a, "Levando o relatório do dia"); await walkTo(a, RECEP.x + 112, RECEP.y + 158, g); a.el.classList.remove("flip");
+    bubble(a, "Seu relatório do dia está pronto 📄", 5000); await sleep(5200); check(a, g); return R.work(a, g);
+  },
+  async party(a, g){ setAct(a, "Na festa 🎉"); a.el.classList.add("jump"); bubble(a, pick(["🎉","Uhuu!","🥳","Bora!"])); await sleep(4000 + Math.random() * 1500); a.el.classList.remove("jump"); check(a, g); return R.work(a, g); },
+};
+function run(a, name, arg, manual){
+  a.gen++; const g = a.gen;
+  a.el.classList.remove("wave", "jump");
+  if (manual) a.manual = Date.now() + 14000;
+  R[name](a, g, arg).catch(e => { if (e !== ABORT) console.error(e); });
+}
+let paused = false;
+setInterval(() => {
+  if (paused || document.hidden || !CFG.roam) return;
+  const idle = AG.filter(a => a.el.classList.contains("sit") && a.manual < Date.now());
+  if (!idle.length) return;
+  const a = pick(idle), r = Math.random();
+  if (r < .3) run(a, "cafe"); else if (r < .65) run(a, "visit"); else run(a, "stretch");
+}, 1800);
+setInterval(() => {
+  if (paused || document.hidden) return;
+  const a = pick(AG.filter(x => x.el.classList.contains("sit")));
+  if (a){ const t = pick(a.says); bubble(a, t); setAct(a, "Trabalhando: " + t); }
+}, 1500);
+
+/* ---------- pedidos ---------- */
+const BOTH = new Set(["Xanax"]);
+const LOCAL = new Set(["Patrick Jane","Cortes CowTalk","Briefing de Carrossel","Carrossel Tweet","Modelo 1 · Motion","Modelo 3 · Ritmo","Modelo 4 · Tipográfico","Transcrição","Plano de Edição"]);
+const IDEAS = {
+  "Xanax":["Revisar o código do site da Matrix Code","Script que renomeia os vídeos da pasta bruto"],
+  "Patrick Jane":["Editar corte 6.mp4 no modelo 4 — Ciro @siqueira.ciro","Editar corte 7.mp4 no modelo 3"],
+  "Cortes CowTalk":["Achar os melhores cortes do episódio novo"], "Briefing de Carrossel":["Briefing de carrossel a partir do corte 5"],
+  "Carrossel Tweet":["Carrossel tweet sobre vaca tranquila na ordenha"], "Modelo 1 · Motion":["Editar corte 7.mp4"], "Modelo 3 · Ritmo":["Editar corte 8.mp4"],
+  "Modelo 4 · Tipográfico":["Editar corte 9.mp4"], "Transcrição":["Transcrever corte 7.mp4"], "Plano de Edição":["Plano de edição do corte 7"],
+};
+const DEPT_IDEAS = [
+  ["Dicas para melhorar o ritmo do corte 5","Título e thumbnail para o vídeo da vaca tranquila"],
+  ["Criar uma página de captura simples","Automatizar o envio dos vídeos prontos"],
+  ["Legenda para o corte da vaca tranquila","Post de LinkedIn sobre o episódio novo"],
+  ["Calendário de posts da semana do CowTalk","Roteiro de Reels de 30 s sobre vaca tranquila"],
+  ["Anúncio para divulgar o podcast a produtores de leite","Público para uma campanha no Meta"],
+  ["Que métricas acompanhar no Instagram","Como saber se um corte deu certo"]];
+let db = null, sampleFn = null, pedidos = [], notas = [], relatorios = [];
+(async () => { try { db = await window.claude?.use?.("db"); } catch {} if (!db) return;
+  db.collection("pedidos").orderBy("at", "desc").limit(40).onSnapshot(s => {
+    pedidos = s.docs.map(d => ({id:d.id, ...d.data()}));
+    if (mode === "hist" && !$("#card").contains(document.activeElement)) renderCard();
+    pedidos.filter(p => p.status === "em andamento").forEach(p => { const a = AG.find(x => x.n === p.agente); if (a) setAct(a, "Trabalhando no seu pedido: " + (p.andamento || p.pedido)); });
+  }, () => {});
+  db.collection("anotacoes").orderBy("at", "desc").limit(150).onSnapshot(s => { notas = s.docs.map(d => ({id:d.id, ...d.data()})); refreshSec(); }, () => {});
+  db.collection("relatorios").orderBy("at", "desc").limit(14).onSnapshot(s => { relatorios = s.docs.map(d => ({id:d.id, ...d.data()})); refreshSec(); checkReport(); }, () => {});
+})();
+(async () => { try { sampleFn = await window.claude?.use?.("sample"); } catch {} })();
+async function savePedido(data){ if (!db) return null; try { return await db.collection("pedidos").add(data); } catch { return null; } }
+const ST = {"na fila":"⏳ na fila","em andamento":"⚙️ em andamento","aguardando você":"❓ precisa de você","aguardando aprovação":"✋ aprovar plano","aprovado":"✅ aprovado, na fila","pronto":"🎉 pronto","entregue":"✅ entregue","erro":"⚠️ erro"};
+function histItem(p){
+  const s = p.status || "", open = s === "aguardando você" || s === "aguardando aprovação";
+  let body = "";
+  if (s === "aguardando você") body = `<p><b>Pergunta:</b> ${esc(p.pergunta || "")}</p><textarea data-reply="${p.id}" rows="2" placeholder="Sua resposta…"></textarea><button class="btn primary" data-send-reply="${p.id}">Responder</button>`;
+  else if (s === "aguardando aprovação") body = `<div class="out">${esc(p.resposta || "")}</div><div class="row"><button class="btn primary" data-approve="${p.id}">Aprovar</button></div><textarea data-reply="${p.id}" rows="2" placeholder="Ou peça uma mudança…"></textarea><button class="btn" data-send-reply="${p.id}">Pedir mudança</button>`;
+  else if (p.resposta) body = `<div class="out">${esc(p.resposta)}</div>`;
+  else if (s === "na fila" || s === "aprovado") body = `<p>Esperando o robô da torre pegar o pedido.</p>`;
+  else if (s === "em andamento") body = `<p>${esc(p.andamento || "Trabalhando…")}</p>`;
+  return `<details ${open ? "open" : ""}><summary><b>${esc(p.agente || "")}</b> · ${esc(ST[s] || s)}<br><span>${esc(p.pedido || "")}</span></summary>${body}</details>`;
+}
+async function patchPedido(id, data){ try { await db.collection("pedidos").doc(id).update(data); } catch { const p = document.createElement("p"); p.className = "small"; p.textContent = "Não consegui salvar. Tente de novo."; $("#card").appendChild(p); } }
+
+/* ---------- secretária ---------- */
+const SEC = AG.find(a => a.s === "papers");
+const hoje = () => new Date().toLocaleDateString("sv-SE");
+const hora = ms => new Date(ms).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"});
+function itensHoje(){
+  const ini = new Date().setHours(0, 0, 0, 0);
+  return [...notas.filter(n => n.at >= ini).map(n => ({at:n.at, txt:n.texto})),
+    ...pedidos.filter(p => p.at >= ini).map(p => ({at:p.at, txt:`${p.agente}: ${p.pedido}`, st:ST[p.status] || p.status}))].sort((x, y) => x.at - y.at);
+}
+function refreshSec(){ if (mode === "req" && SEC && selK === SEC.k && !$("#card").contains(document.activeElement)) renderCard(); }
+function checkReport(){
+  if (!SEC || !relatorios.length) return;
+  const novo = relatorios[0], visto = store.get("helena-visto", "");
+  SEC.el.querySelector(".badge")?.remove();
+  if (novo.id === visto) return;
+  const b = document.createElement("span"); b.className = "badge"; b.textContent = "📄"; SEC.el.appendChild(b);
+  if (SEC !== talkingTo) run(SEC, "report", null, true);
+}
+function renderSec(c, a){
+  const its = itensHoje();
+  c.innerHTML = `<button class="x" id="cx" aria-label="Fechar">×</button>
+    <div class="top"><span class="big">${spriteSVG(a.skin, a.c)}</span><div><div class="where">Secretária · ${esc(roomName(a.room))}</div><h2>${esc(a.n)}</h2></div></div>
+    <div class="status"><i></i><span id="cardStatus">${esc(a.act)}</span></div>
+    <p>Anoto sozinha tudo o que você pede no prédio. O que você fizer fora daqui, me conte aqui embaixo. Todo dia às 20:00 eu junto tudo num relatório e levo até a sua mesa.</p>
+    <label class="eyebrow" for="note">Anotar uma tarefa que você fez</label>
+    <textarea id="note" rows="2" placeholder="Ex.: Reunião com o cliente da landing page"></textarea>
+    <div class="row"><button class="btn primary" id="saveNote">📝 Anotar</button><button class="btn" id="sumNow">✨ Resumo de hoje agora</button></div>
+    <div class="out" id="out" hidden></div>
+    <span class="eyebrow">Hoje · ${its.length} ${its.length === 1 ? "item" : "itens"}</span>
+    ${!db ? `<p class="small">As anotações aparecem quando a página está aberta pelo claude.ai.</p>` : its.length ? `<ul class="daylist">${its.map(i => `<li><time>${hora(i.at)}</time><span>${esc(i.txt)}${i.st ? ` <span class="small" style="color:var(--muted)">· ${esc(i.st)}</span>` : ""}</span></li>`).join("")}</ul>` : `<p class="small">Nada anotado hoje ainda.</p>`}
+    <span class="eyebrow">Relatórios do dia</span>
+    ${relatorios.length ? `<div class="hist">${relatorios.map((r, i) => `<details ${i === 0 ? "open" : ""}><summary><b>📄 ${esc(new Date(r.dia + "T12:00").toLocaleDateString("pt-BR", {weekday:"long", day:"2-digit", month:"2-digit"}))}</b><br><span>${esc(String(r.total ?? ""))} ${r.total === 1 ? "item" : "itens"}</span></summary><div class="out">${esc(r.texto || "")}</div></details>`).join("")}</div>` : `<p class="small">O primeiro relatório chega hoje às 20:00.</p>`}
+    <details ${PUBLIC ? "open" : ""}><summary>Outras ordens e visual</summary>
+      <div class="acts"><button data-do="cafe"><span>☕</span>Café</button><button data-do="wave"><span>👋</span>Acenar</button><button data-do="party"><span>🎉</span>Comemorar</button><button data-czopen="a${a.k}"><span>🎨</span>Visual</button></div>
+    </details>`;
+  if (relatorios.length){ store.set("helena-visto", relatorios[0].id); a.el.querySelector(".badge")?.remove(); }
+}
+async function saveNote(){
+  const ta = $("#note"), v = ta.value.trim(); if (!v){ ta.focus(); return; }
+  const out = $("#out"); out.hidden = false;
+  if (!db){ out.textContent = "As anotações só salvam com a página aberta pelo claude.ai."; return; }
+  try { await db.collection("anotacoes").add({texto:v.slice(0, 1000), at:Date.now(), dia:hoje()}); ta.value = ""; bubble(SEC, "Anotado ✍️"); renderCard(); }
+  catch { out.textContent = "Não consegui anotar. Tente de novo."; }
+}
+async function sumNow(){
+  const out = $("#out"), its = itensHoje(); out.hidden = false;
+  if (!its.length){ out.textContent = "Ainda não tem nada anotado hoje."; return; }
+  if (!sampleFn){ out.textContent = "O resumo na hora só funciona com a página aberta pelo claude.ai. O relatório das 20:00 chega do mesmo jeito."; return; }
+  if (ctl) ctl.abort(); ctl = new AbortController(); const myCtl = ctl;
+  out.textContent = "Escrevendo…"; bubble(SEC, "Já te passo o resumo");
+  const lista = its.map(i => `- ${hora(i.at)} ${i.txt}${i.st ? " (" + i.st + ")" : ""}`).join("\n");
+  try {
+    const r = await sampleFn(`Você é Helena, secretária do dono da Matrix Code. Escreva o resumo do dia dele em português do Brasil, em tom cordial e direto, com no máximo 180 palavras, em três partes curtas com listas "-": O que foi feito, O que está pendente (pedidos na fila, em andamento ou esperando resposta dele) e Sugestão para amanhã. Use só os itens abaixo; não invente nada.\n\nItens de hoje (${hoje()}):\n${lista}`, {cache:false, signal:myCtl.signal, onText:({text}) => { if (ctl === myCtl) out.textContent = text; }});
+    if (ctl === myCtl) out.textContent = r.text;
+  } catch (err){ if (!myCtl.signal.aborted) out.textContent = err?.code === "rate_limited" ? "Muitos pedidos seguidos. Espere um minuto." : "Não deu para fazer o resumo agora."; }
+  finally { if (ctl === myCtl) ctl = null; }
+}
+
+/* ---------- painel ---------- */
+let selK = null, mode = null, talkingTo = null, ctl = null;
+function renderCard(){
+  const c = $("#card");
+  if (mode === "hist"){
+    c.innerHTML = `<button class="x" id="cx" aria-label="Fechar">×</button><div><span class="eyebrow">Pedidos feitos na torre</span><h2>Pedidos</h2></div>
+      ${!db ? `<p>O histórico aparece quando a torre está aberta pelo claude.ai.</p>` : pedidos.length ? `<div class="hist">${pedidos.map(histItem).join("")}</div>` : `<p>Nenhum pedido ainda. Vá até a mesa de um agente e peça alguma coisa.</p>`}
+      <p class="small">O robô da torre pega a fila a cada 10 minutos, enquanto o Mac estiver ligado e o app Claude aberto.</p>`;
+    c.hidden = false; return;
+  }
+  if (mode === "custom"){ renderCustom(c); c.hidden = false; return; }
+  const a = AG[selK]; if (!a){ c.hidden = true; return; }
+  if (a === SEC && !PUBLIC){ c.style.setProperty("--c", a.c); renderSec(c, a); c.hidden = false; return; }
+  const local = LOCAL.has(a.n), ideas = IDEAS[a.n] || DEPT_IDEAS[a.di] || [];
+  const opts = AG.filter(x => x !== a).map(x => `<option value="${x.k}">${esc(x.n)} · ${esc(roomName(x.room))}</option>`).join("");
+  c.style.setProperty("--c", a.c);
+  c.innerHTML = `<button class="x" id="cx" aria-label="Fechar">×</button>
+    <div class="top"><span class="big">${spriteSVG(a.skin, a.c)}</span><div><div class="where">Mesa ${a.num} · ${esc(roomName(a.room))}</div><h2>${esc(a.n)}</h2></div></div>
+    <div class="status"><i></i><span id="cardStatus">${esc(a.act)}</span></div>
+    <p>${esc(a.v)}</p>
+    ${PUBLIC ? `<p class="small">Os pedidos a ${esc(a.n.split(" ")[0])} são só para a equipe da Matrix Code. Aqui você pode cumprimentar, chamar para um café ou mudar o visual.</p>` : `<label class="eyebrow" for="ask">O que você precisa?</label>
+    <textarea id="ask" rows="3" placeholder="${local ? "Ex.: " + esc(ideas[0] || "") : "Escreva o pedido…"}"></textarea>
+    ${ideas.length ? `<div class="sugs">${ideas.map(i => `<button data-idea="${esc(i)}">${esc(i)}</button>`).join("")}</div>` : ""}
+    ${BOTH.has(a.n) ? `<div class="row"><button class="btn primary" id="send">Responder agora</button><button class="btn" id="sendQ">💻 Fazer no Mac</button></div>
+    <p class="small"><b>Responder agora:</b> a resposta chega aqui, como conselho ou trecho de código. <b>Fazer no Mac:</b> o pedido entra na fila e o robô mexe de verdade nos seus projetos, num branch separado, sem apagar nada nem publicar.</p>`
+    : `<button class="btn primary" id="send">${local ? "Anotar na fila" : "Pedir para " + esc(a.n.split(" ")[0])}</button>
+    <p class="small">${local ? "Este agente trabalha com os arquivos do seu Mac: o pedido entra na fila e o robô da torre executa sozinho." : "A resposta chega aqui mesmo, escrita pelo Claude no papel deste agente."}</p>`}
+    `}<div class="out" id="out" hidden></div>
+    <button class="btn" id="copyOut" hidden>Copiar resposta</button>
+    <details><summary>Outras ordens e visual</summary>
+      <div class="acts">
+        <button data-do="cafe"><span>☕</span>Café</button><button data-do="wave"><span>👋</span>Acenar</button><button data-do="party"><span>🎉</span>Comemorar</button><button data-czopen="a${a.k}"><span>🎨</span>Visual</button>
+      </div>
+      <div class="visit"><select id="visitSel" aria-label="Escolher colega para visitar">${opts}</select><button class="btn" data-do="visit">Visitar</button></div>
+      ${PUBLIC ? "" : `<div><span class="eyebrow">Para chamar no Claude Code</span><div class="cmd" id="cmd">${esc(a.cmd)}</div></div>
+      <button class="btn" id="copy">Copiar comando</button>`}
+    </details>`;
+  c.hidden = false;
+}
+function select(k){
+  if ($("#card").contains(document.activeElement)) document.activeElement.blur();
+  document.querySelectorAll(".sp.sel").forEach(x => x.classList.remove("sel"));
+  if (ctl){ ctl.abort(); ctl = null; }
+  if (talkingTo && talkingTo.k !== k){ const t = talkingTo; talkingTo = null; t.manual = 0; run(t, "work"); }
+  selK = k; mode = k == null ? null : "req";
+  if (k == null){ $("#card").hidden = true; return; }
+  AG[k].el.classList.add("sel"); renderCard();
+}
+async function send(toQueue){
+  const a = AG[selK], text = $("#ask").value.trim(); if (!a || !text){ $("#ask").focus(); return; }
+  const out = $("#out"), btn = $("#send"); out.hidden = false; btn.disabled = true;
+  const local = LOCAL.has(a.n) || toQueue === true;
+  if (local || !sampleFn){
+    const cmd = a.cmd.startsWith("/") ? `${a.cmd} ${text}` : `Use o agente ${a.n} para: ${text}`;
+    const ok = await savePedido({agente:a.n, pedido:text, comando:cmd, status:"na fila", at:Date.now()});
+    out.textContent = local
+      ? (ok ? `📝 Anotado na fila da torre.\n\nO robô da torre pega a fila a cada 10 minutos e ${a.n} começa sozinho. Acompanhe em 📋 Pedidos: se tiver uma pergunta ou um plano para aprovar, aparece lá.` : `A fila só salva com a torre aberta no claude.ai. No Claude Code, use:\n\n${cmd}`)
+      : `Aqui o Claude não pode responder pela página.${ok ? " O pedido entrou na fila." : ""}\n\nNo Claude Code, use:\n${cmd}`;
+    bubble(a, "Anotado! 📝"); setAct(a, "Pedido anotado: " + text); if (SEC && ok) setTimeout(() => bubble(SEC, "Anotei no seu dia ✍️"), 900);
+    $("#copyOut").hidden = false; btn.disabled = false; return;
+  }
+  setAct(a, "Trabalhando no seu pedido…"); bubble(a, "Deixa comigo!");
+  out.textContent = "Pensando…";
+  ctl = new AbortController(); const myCtl = ctl;
+  const pulse = setInterval(() => bubble(a, pick(["Trabalhando nisso…","Quase lá","Escrevendo…"])), 3200);
+  const prompt = `Você é ${a.n}, agente da Matrix Code, empresa de tecnologia que também cuida do CowTalk, um podcast brasileiro sobre pecuária leiteira. Sua especialidade: ${a.v}\n\nPedido do dono da Matrix Code:\n${text}\n\nResponda em português do Brasil, direto e pronto para usar, em no máximo 300 palavras. Use listas curtas com "-" quando ajudar. Se mostrar código, mande só o trecho necessário. Sem markdown pesado.`;
+  try {
+    const r = await sampleFn(prompt, {cache:false, signal:myCtl.signal, onText:({text:t}) => { if (ctl === myCtl) out.textContent = t; }});
+    if (ctl === myCtl) out.textContent = r.text;
+    const ok = await savePedido({agente:a.n, pedido:text, resposta:String(r.text).slice(0, 8000), status:"entregue", at:Date.now()});
+    if (SEC && ok) bubble(SEC, "Anotei no seu dia ✍️");
+    bubble(a, "Pronto! ✅"); setAct(a, "Entregou: " + text);
+    if (ctl === myCtl) $("#copyOut").hidden = false;
+  } catch (err){
+    if (err?.name === "AbortError" || myCtl.signal.aborted) return;
+    out.textContent = err?.code === "not_granted" ? "O Claude não foi liberado para esta página. Libere em Permissões da página e tente de novo."
+      : err?.code === "rate_limited" ? "Muitos pedidos seguidos. Espere um minuto e tente de novo." : "Não deu para responder agora. Tente de novo em instantes.";
+    bubble(a, "Ops…");
+  } finally { clearInterval(pulse); if (ctl === myCtl){ ctl = null; const b = $("#send"); if (b) b.disabled = false; } }
+}
+
+/* ---------- seu personagem ---------- */
+const P = {n:"Você", x:RECEP.dx, y:RECEP.y + 280, gen:0, path:[], keyMove:false};
+P.el = document.createElement("div"); P.el.className = "sp me";
+P.el.innerHTML = `<span class="flipper"></span><span class="nm">Você</span><span class="prompt" hidden></span>`;
+world.appendChild(P.el); place(P);
+applyCfg();
+$("#czBtn").onclick = () => mode === "custom" ? select(null) : openCustom();
+
+/* ---------- painel de personalização ---------- */
+let czTab = "me", czRoom = "0";
+const czAg = () => AG[+czTab.slice(1)];
+const val = v => v === "true" ? true : v === "false" ? false : v === "" ? null : v;
+function charEditor(k, who){
+  const on = (f, v) => String(k[f] || (typeof v === "boolean" ? false : "")) === String(v);
+  const sw = (f, list, extra = "") => `<div class="sw">${extra}${list.map(v => `<button data-cz="${f}" data-v="${v}" style="--v:${v}" aria-label="${v}" aria-pressed="${on(f, v)}"></button>`).join("")}</div>`;
+  const chip = (f, v, label) => `<button data-cz="${f}" data-v="${v}" aria-pressed="${on(f, v)}">${label}</button>`;
+  const tog = (f, label) => `<button data-cz="${f}" data-v="${!k[f]}" aria-pressed="${!!k[f]}">${label}</button>`;
+  return `<div class="preview"><span class="pv">${spriteSVG(k, k.shirt || "#C78A1E")}</span><div class="row"><button class="btn" data-czact="rand">🎲 Aleatório</button><button class="btn" data-czact="reset">${who === "ag" ? "Visual original" : "Restaurar"}</button></div></div>
+    ${who === "me" ? `<label class="fld"><span>Seu nome no mapa</span><input type="text" data-czin="name" maxlength="16" value="${esc(k.name || "")}"></label>` : ""}
+    <div class="fld"><span>Corpo</span><div class="chips">${chip("g", "m", "Masculino")}${chip("g", "f", "Feminino")}</div></div>
+    <div class="fld"><span>Tom de pele</span>${sw("skin", SKIN_T)}</div>
+    <div class="fld"><span>Cabelo</span><div class="chips">${(k.g === "m" ? M_STYLES : F_STYLES).map(s => chip("style", s, STYLE_N[s])).join("")}</div>${sw("hair", HAIR_C)}</div>
+    <div class="fld"><span>Camisa${k.cap ? " e boné" : ""}</span>${sw("shirt", SHIRTS)}</div>
+    <div class="fld"><span>${k.g === "f" ? "Calça ou saia" : "Calça"}</span>${sw("pants", PANTS)}${k.g === "f" ? `<div class="chips">${chip("skirt", false, "Calça")}${chip("skirt", true, "Saia")}</div>` : ""}</div>
+    <div class="fld"><span>Paletó</span>${sw("jacket", JACKETS, `<button data-cz="jacket" data-v="" style="--v:var(--bg)" aria-label="Sem paletó" aria-pressed="${!k.jacket}">✕</button>`)}${k.jacket ? `<span>Gravata</span>${sw("tie", TIES)}` : ""}</div>
+    <div class="fld"><span>Acessórios</span><div class="chips">${tog("glasses", "👓 Óculos")}${tog("phones", "🎧 Fone")}${tog("cap", "🧢 Boné")}${k.g === "m" ? tog("beard", "🧔 Barba") : tog("earrings", "✨ Brincos")}</div></div>`;
+}
+function studioEditor(){
+  const rc = CFG.rooms[czRoom];
+  const chip = (attr, f, v, label, cur) => `<button ${attr}="${f}" data-v="${v}" aria-pressed="${String(cur) === String(v)}">${label}</button>`;
+  const sw = (attr, f, list, cur) => `<div class="sw">${list.map(v => `<button ${attr}="${f}" data-v="${v}" style="--v:${v}" aria-label="${v}" aria-pressed="${cur === v}"></button>`).join("")}</div>`;
+  return `<label class="fld"><span>Nome da torre</span><input type="text" data-czin="title" maxlength="28" value="${esc(CFG.title)}"></label>
+    <div class="fld"><span>Luz</span><div class="chips">${Object.entries(LIGHTS).map(([v, l]) => chip("data-czg", "light", v, l, CFG.light)).join("")}</div></div>
+    <div class="fld"><span>Sala</span><div class="tabs" role="tablist">${ROOMS.map(R => `<button role="tab" data-czroom="${R.key}" aria-selected="${String(R.key) === czRoom}">${esc(roomName(R))}</button>`).join("")}</div></div>
+    <label class="fld"><span>Nome da sala</span><input type="text" data-czin="room" maxlength="22" value="${esc(rc.name)}"></label>
+    <div class="fld"><span>Piso</span><div class="chips">${Object.entries(FLOORS).map(([v, l]) => chip("data-czr", "floor", v, l, rc.floor)).join("")}</div></div>
+    <div class="fld"><span>Cor da sala</span>${sw("data-czr", "c", ROOMC, rc.c)}</div>
+    <div class="fld"><span>Decoração</span><div class="chips">${Object.entries(DECO).map(([g, l]) => `<button data-czd="${g}" aria-pressed="${!!CFG.deco[g]}">${l}</button>`).join("")}</div></div>
+    <div class="fld"><span>Cor do sofá</span>${sw("data-czg", "sofa", SOFAS, CFG.sofa)}</div>
+    <div class="fld"><span>Mais</span><div class="chips">${chip("data-czg", "names", !CFG.names, "🏷️ Nomes sempre visíveis", false)}${chip("data-czg", "fast", !CFG.fast, "⚡ Andar mais rápido", false)}</div></div>
+    <button class="btn" data-czact="studio-reset">Restaurar estúdio original</button>`;
+}
+function renderCustom(c){
+  c.style.setProperty("--c", "var(--accent)");
+  const tabs = [["me", "Você"], ...AG.map(a => ["a" + a.k, a.n.split(" ")[0]]), ["studio", "Estúdio"]];
+  c.innerHTML = `<button class="x" id="cx" aria-label="Fechar">×</button><div><span class="eyebrow">Fica salvo neste navegador</span><h2>Personalizar</h2></div>
+    <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-cztab="${k}" aria-selected="${czTab === k}">${esc(l)}</button>`).join("")}</div>
+    ${czTab === "studio" ? studioEditor() : charEditor(czTab === "me" ? CFG.me : agSkin(czAg()), czTab === "me" ? "me" : "ag")}`;
+  c.querySelectorAll('[data-czg="names"],[data-czg="fast"]').forEach(b => b.setAttribute("aria-pressed", String(!!CFG[b.dataset.czg])));
+}
+function openCustom(tab){ select(null); mode = "custom"; if (tab) czTab = tab; const c = $("#card"); renderCustom(c); c.hidden = false; c.scrollTop = 0; }
+function czClick(b){
+  const d = b.dataset, v = val(d.v);
+  if (d.czopen){ openCustom(d.czopen); return; }
+  if (d.cztab) czTab = d.cztab;
+  else if (d.czroom) czRoom = d.czroom;
+  else if (d.cz){
+    const k = czTab === "me" ? CFG.me : (CFG.ag[czAg().n] ||= {...agSkin(czAg())});
+    k[d.cz] = v;
+    if (d.cz === "g"){ const st = v === "m" ? M_STYLES : F_STYLES; if (!st.includes(k.style)) k.style = st[0]; if (v === "m"){ k.skirt = false; k.earrings = false; } else k.beard = false; }
+    if (d.cz === "jacket" && v && !k.tie) k.tie = TIES[0];
+  }
+  else if (d.czg) CFG[d.czg] = v;
+  else if (d.czr) CFG.rooms[czRoom][d.czr] = v;
+  else if (d.czd) CFG.deco[d.czd] = !CFG.deco[d.czd];
+  else if (d.czact === "rand"){
+    const k = {...skinFor(Math.floor(Math.random() * 99999), pick(["m", "f"])), shirt:pick(SHIRTS), cap:Math.random() < .2, phones:Math.random() < .3, jacket:Math.random() < .2 ? pick(JACKETS) : null, tie:pick(TIES)};
+    if (czTab === "me") CFG.me = {...k, name:CFG.me.name}; else CFG.ag[czAg().n] = k;
+  }
+  else if (d.czact === "reset"){ if (czTab === "me") CFG.me = {...cfgDefault().me, name:CFG.me.name}; else delete CFG.ag[czAg().n]; }
+  else if (d.czact === "studio-reset"){ const df = cfgDefault(); Object.assign(CFG, {light:df.light, names:df.names, fast:df.fast, title:df.title, sofa:df.sofa, rooms:df.rooms, deco:df.deco}); }
+  applyCfg();
+  const c = $("#card"), st = c.scrollTop; renderCustom(c); c.scrollTop = st;
+  if (czTab[0] === "a" && (d.cz || d.czact)) bubble(czAg(), pick(["Gostei do visual! 😎","Ficou elegante","Visual novo!"]));
+  if (czTab === "me" && (d.cz || d.czact)) bubble(P, "✨");
+}
+document.addEventListener("input", e => {
+  const f = e.target.dataset?.czin; if (!f) return;
+  const v = e.target.value;
+  if (f === "name") CFG.me.name = v; else if (f === "title") CFG.title = v; else if (f === "room") CFG.rooms[czRoom].name = v;
+  applyCfg();
+  if (f === "room"){ const t = document.querySelector(`[data-czroom="${czRoom}"]`); if (t) t.textContent = v; }
+});
+
+const keys = new Set(); let near = null;
+const typing = () => /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || "");
+const KMAP = {arrowleft:"L", a:"L", arrowright:"R", d:"R", arrowup:"U", w:"U", arrowdown:"D", s:"D"};
+addEventListener("keydown", e => {
+  if (e.key === "Escape"){ select(null); return; }
+  if (typing()) return;
+  const k = KMAP[e.key.toLowerCase()];
+  if (k){ keys.add(k); P.gen++; P.path = []; e.preventDefault(); return; }
+  if ((e.key === "Enter" || e.key === " " || e.key.toLowerCase() === "e") && near && !document.activeElement?.closest?.("button")){ e.preventDefault(); talk(near); }
+});
+addEventListener("keyup", e => { const k = KMAP[e.key.toLowerCase()]; if (k) keys.delete(k); });
+addEventListener("blur", () => keys.clear());
+function blocked(x, y){
+  const bx = x - 9, by = y - 8, bw = 18, bh = 10;
+  if (x < 4 || y < 4 || x > W - 4 || y > H - 2) return true;
+  return WALLS.some(w => bx < w.x + w.w && bx + bw > w.x && by < w.y + w.h && by + bh > w.y);
+}
+function moveMe(dt){
+  const dx = (keys.has("R") ? 1 : 0) - (keys.has("L") ? 1 : 0), dy = (keys.has("D") ? 1 : 0) - (keys.has("U") ? 1 : 0);
+  P.keyMove = !!(dx || dy);
+  if (!P.keyMove) return;
+  const n = Math.hypot(dx, dy), v = 170 * dt * (CFG.fast ? 1.7 : 1);
+  const nx = P.x + dx / n * v, ny = P.y + dy / n * v;
+  if (!blocked(nx, P.y)) P.x = nx;
+  if (!blocked(P.x, ny)) P.y = ny;
+  P.el.classList.add("walk"); if (dx) P.el.classList.toggle("flip", dx < 0);
+  place(P); follow();
+}
+function follow(){
+  const m = $("#map"), s = scale, px = P.x * s, py = P.y * s, pad = 120;
+  if (px < m.scrollLeft + pad) m.scrollLeft = px - pad; else if (px > m.scrollLeft + m.clientWidth - pad) m.scrollLeft = px - m.clientWidth + pad;
+  if (py < m.scrollTop + pad) m.scrollTop = py - pad; else if (py > m.scrollTop + m.clientHeight - pad) m.scrollTop = py - m.clientHeight + pad;
+}
+function prompt(t){ const p = P.el.querySelector(".prompt"); if (!t){ p.hidden = true; return; } p.textContent = t; p.hidden = false; }
+function updateNear(){
+  let best = null, bd = 64;
+  for (const a of AG){ const d = Math.hypot(a.x - P.x, a.y - P.y); if (d < bd && roomAt(a.x, a.y) === roomAt(P.x, P.y)){ bd = d; best = a; } }
+  if (best !== near){ near?.el.classList.remove("near"); near = best; near?.el.classList.add("near"); $("#padTalk").disabled = !near; }
+  prompt(near && talkingTo !== near ? `Enter: falar com ${near.n}` : "");
+}
+async function goTo(x, y){
+  P.gen++; const g = P.gen;
+  await goPath(P, route(P.x, P.y, x, y), g);
+}
+async function goTalk(a){
+  run(a, "work", null, true); a.manual = Infinity;
+  try { await goTo(a.hx - 4, a.hy + 36); } catch (e){ if (e === ABORT) return; throw e; }
+  for (let i = 0; i < 40 && !a.el.classList.contains("sit"); i++) await sleep(150);
+  talk(a);
+}
+function talk(a){
+  if (talkingTo && talkingTo !== a){ const t = talkingTo; t.manual = 0; run(t, "work"); }
+  talkingTo = a; a.manual = Infinity;
+  bubble(a, pick(["Pois não? 🙂","Em que posso ajudar?","Oi! Manda aí"]));
+  select(a.k); setTimeout(() => ($("#ask") || $("#note"))?.focus({preventScroll:true}), 50);
+}
+document.querySelectorAll("[data-pad]").forEach(b => {
+  const k = b.dataset.pad;
+  if (k === "T") b.addEventListener("click", () => near && talk(near));
+  else {
+    b.addEventListener("pointerdown", e => { e.preventDefault(); keys.add(k); P.gen++; P.path = []; });
+    ["pointerup","pointerleave","pointercancel"].forEach(ev => b.addEventListener(ev, () => keys.delete(k)));
+  }
+});
+
+/* ---------- zoom ---------- */
+let scale = 1;
+function setScale(s){
+  const m = $("#map"), cx = (m.scrollLeft + m.clientWidth / 2) / scale, cy = (m.scrollTop + m.clientHeight / 2) / scale;
+  scale = Math.max(.4, Math.min(2, s));
+  world.style.transform = `scale(${scale})`;
+  $("#sizer").style.width = W * scale + "px"; $("#sizer").style.height = H * scale + "px";
+  m.scrollLeft = cx * scale - m.clientWidth / 2; m.scrollTop = cy * scale - m.clientHeight / 2;
+}
+function fit(){ setScale(Math.max(.55, Math.min(1.35, ($("#map").clientWidth - 14) / W))); }
+$("#zin").onclick = () => setScale(scale * 1.2); $("#zout").onclick = () => setScale(scale / 1.2); $("#zfit").onclick = fit;
+fit(); addEventListener("resize", fit);
+
+/* ---------- cliques ---------- */
+document.addEventListener("click", async e => {
+  const sp = e.target.closest(".sp:not(.me):not(.other)"); if (sp){ goTalk(AG[+sp.dataset.k]).catch(() => {}); return; }
+  const cz = e.target.closest("[data-cz],[data-czg],[data-czr],[data-czd],[data-cztab],[data-czroom],[data-czact],[data-czopen]"); if (cz){ czClick(cz); return; }
+  const dp = e.target.closest("[data-dept]");
+  if (dp){ const Rm = ROOMS.find(r => r.dept === +dp.dataset.dept), y = Rm.db ? Rm.y + RH - 60 : Rm.y + 60; goTo(Rm.dx, y).catch(() => {}); centerOn(Rm.dx, Rm.y + RH / 2); return; }
+  if (e.target.closest("[data-copa]")){ goTo(COPA.dx, COPA.y + 200).catch(() => {}); centerOn(COPA.dx, COPA.y + 200); return; }
+  if (e.target.closest("#world") && !e.target.closest(".sp")){
+    const r = world.getBoundingClientRect(), x = (e.clientX - r.left) / scale, y = (e.clientY - r.top) / scale;
+    if (!blocked(x, y)) goTo(x, y).catch(() => {});
+    return;
+  }
+  const idea = e.target.closest("[data-idea]"); if (idea){ $("#ask").value = idea.dataset.idea; $("#ask").focus(); return; }
+  if (e.target.id === "send"){ send(); return; }
+  if (e.target.id === "sendQ"){ send(true); return; }
+  if (e.target.id === "saveNote"){ saveNote(); return; }
+  if (e.target.id === "sumNow"){ sumNow(); return; }
+  const ap = e.target.closest("[data-approve]"); if (ap){ ap.disabled = true; await patchPedido(ap.dataset.approve, {status:"aprovado", at_resposta:Date.now()}); return; }
+  const rp = e.target.closest("[data-send-reply]");
+  if (rp){ const id = rp.dataset.sendReply, ta = document.querySelector(`[data-reply="${id}"]`), v = ta?.value.trim(); if (!v){ ta?.focus(); return; } rp.disabled = true; ta.blur(); await patchPedido(id, {status:"na fila", resposta_dono:v, at_resposta:Date.now()}); return; }
+  const d = e.target.closest("[data-do]");
+  if (d && selK != null){ const a = AG[selK]; talkingTo = null; a.manual = 0; if (d.dataset.do === "visit") run(a, "visit", AG[+$("#visitSel").value], true); else run(a, d.dataset.do, null, true); return; }
+  const all = e.target.closest("[data-all]");
+  if (all){
+    const kind = all.dataset.all;
+    if (kind === "hist"){ select(null); mode = "hist"; renderCard(); return; }
+    AG.forEach((a, i) => { if (a === talkingTo) return; setTimeout(() => run(a, kind === "cafe" ? "cafe" : kind === "party" ? "party" : "work", null, true), reduced ? 0 : i * 70); });
+    if (kind === "party") confetti();
+    return;
+  }
+  if (e.target.id === "cx") select(null);
+  if (e.target.id === "copy" || e.target.id === "copyOut"){
+    const src = e.target.id === "copy" ? $("#cmd") : $("#out");
+    try { await navigator.clipboard.writeText(src.textContent); e.target.textContent = "Copiado"; }
+    catch { const r = document.createRange(); r.selectNodeContents(src); const s = getSelection(); s.removeAllRanges(); s.addRange(r); e.target.textContent = "Selecionado: use Cmd+C"; }
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && document.activeElement?.id === "ask") send(); });
+function centerOn(x, y){ const m = $("#map"); m.scrollTo({left:x * scale - m.clientWidth / 2, top:y * scale - m.clientHeight / 2, behavior:reduced ? "auto" : "smooth"}); }
+function confetti(){
+  if (reduced) return;
+  for (let i = 0; i < 70; i++){ const s = document.createElement("span"); s.className = "confetti"; s.textContent = pick(["🎉","✨","🎊","⭐"]); s.style.left = Math.random() * W + "px"; s.style.top = Math.random() * (H - 200) + "px"; s.style.animationDelay = Math.random() * .8 + "s"; world.appendChild(s); setTimeout(() => s.remove(), 3600); }
+}
+function roamLabel(){ const b = $("#roam"); b.setAttribute("aria-pressed", CFG.roam); b.textContent = CFG.roam ? "🚶 Andando livre" : "🪑 Ficar na mesa"; }
+roamLabel();
+$("#roam").onclick = () => {
+  CFG.roam = !CFG.roam; store.set("torre-cfg", CFG); roamLabel();
+  if (!CFG.roam) AG.forEach(a => { if (a !== talkingTo && (a.x !== a.hx || a.y !== a.hy)){ a.manual = 0; run(a, "work"); } });
+};
+$("#pause").onclick = e => { paused = !paused; e.currentTarget.setAttribute("aria-pressed", paused); e.currentTarget.textContent = paused ? "▶ Continuar" : "⏸ Pausar"; };
+$("#q")?.addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  const hits = AG.filter(a => (a.n + " " + a.v + " " + DEPTS[a.di].t).toLowerCase().includes(q));
+  AG.forEach(a => { const hit = !q || hits.includes(a); a.el.classList.toggle("dim", !hit); a.desk.classList.toggle("hit", !!q && hit); });
+  if (q && hits.length) centerOn(hits[0].hx, hits[0].hy);
+});
+
+/* ---------- laço ---------- */
+let last = performance.now();
+function loop(t){
+  const dt = Math.min(60, t - last) / 1000; last = t;
+  if (!paused){ moveMe(dt); stepAll(dt); if (P.path.length) follow(); }
+  stepPeers(dt); sendPresence();
+  updateNear(); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+/* ---------- online: outras pessoas na sala, ao vivo ---------- */
+const HEX = /^#[0-9a-fA-F]{6}$/;
+function cleanSkin(s){
+  s = s && typeof s === "object" ? s : {};
+  const g = s.g === "f" ? "f" : "m", styles = g === "m" ? M_STYLES : F_STYLES, col = (v, d) => typeof v === "string" && HEX.test(v) ? v : d;
+  return {g, skin:col(s.skin, SKIN_T[1]), hair:col(s.hair, HAIR_C[0]), style:styles.includes(s.style) ? s.style : styles[0], pants:col(s.pants, PANTS[0]),
+    shirt:col(s.shirt, "#16A34A"), jacket:col(s.jacket, null), tie:col(s.tie, TIES[0]), skirt:!!s.skirt && g === "f", beard:!!s.beard && g === "m",
+    earrings:!!s.earrings && g === "f", glasses:!!s.glasses, phones:!!s.phones, cap:!!s.cap};
+}
+let room = null, userCap = null, lastSent = "";
+const PEERS = new Map(), names = {};
+function sendPresence(){
+  if (!room) return;
+  const p = {x:Math.round(P.x), y:Math.round(P.y), f:P.el.classList.contains("flip"), w:P.el.classList.contains("walk"), skin:cleanSkin(CFG.me), name:((CFG.me.name || "").trim() === "Você" ? "" : (CFG.me.name || "").trim().slice(0, 24))};
+  const s = JSON.stringify(p); if (s === lastSent) return; lastSent = s; room.presence(p).catch(() => {});
+}
+function updatePeers(list){
+  const seen = new Set();
+  for (const p of list){
+    const pr = p.presence || {};
+    if (p.isMe || p.kind !== "viewer" || typeof pr.x !== "number" || typeof pr.y !== "number") continue;
+    seen.add(p.peer);
+    let o = PEERS.get(p.peer);
+    if (!o){
+      const el = document.createElement("div"); el.className = "sp other"; el.innerHTML = `<span class="flipper"></span><span class="nm"></span>`;
+      world.appendChild(el); o = {el, x:pr.x, y:pr.y, skinKey:""}; PEERS.set(p.peer, o);
+    }
+    o.tx = Math.max(0, Math.min(W, pr.x)); o.ty = Math.max(0, Math.min(H, pr.y)); o.w = !!pr.w;
+    o.el.classList.toggle("flip", !!pr.f);
+    const sk = cleanSkin(pr.skin), key = JSON.stringify(sk);
+    if (key !== o.skinKey){ o.skinKey = key; o.el.querySelector(".flipper").innerHTML = spriteSVG(sk, sk.shirt); }
+    o.by = p.by; o.nick = typeof pr.name === "string" ? pr.name.slice(0, 24) : "";
+    o.el.querySelector(".nm").textContent = o.nick || "Visitante";
+  }
+  for (const [k, o] of PEERS) if (!seen.has(k)){ o.el.remove(); PEERS.delete(k); }
+  const ids = [...new Set([...PEERS.values()].map(o => o.by).filter(id => id && !(id in names)))];
+  if (ids.length && userCap){ ids.forEach(id => names[id] = ""); userCap.profiles(ids).then(ps => { ids.forEach(id => names[id] = ps[id]?.name || ""); updatePeers(room.peers()); }).catch(() => {}); }
+  const o = $("#online"); o.textContent = `🟢 ${PEERS.size + 1} online`;
+  o.title = ["Você", ...[...PEERS.values()].map(x => names[x.by] || x.nick || "Visitante")].join(", ");
+}
+function stepPeers(dt){
+  for (const o of PEERS.values()){
+    const dx = o.tx - o.x, dy = o.ty - o.y, k = Math.min(1, dt * 12);
+    o.x += dx * k; o.y += dy * k;
+    o.el.classList.toggle("walk", o.w || Math.hypot(dx, dy) > 1.5);
+    place(o);
+  }
+}
+(async () => {
+  try { room = await window.NET; } catch {}
+  if (!room) return;
+  $("#online").hidden = false; $("#chat").hidden = false;
+  room.onPeers(ch => updatePeers(ch.peers));
+  room.on("chat", m => {
+    const txt = typeof m.data?.t === "string" ? m.data.t.trim().slice(0, 140) : ""; if (!txt) return;
+    const o = m.isMe && m.sameTab ? P : PEERS.get(m.peer); if (o) bubble(o, txt, 6000);
+  });
+  sendPresence();
+})();
+$("#chat").addEventListener("submit", async e => {
+  e.preventDefault();
+  const inp = $("#chatIn"), txt = inp.value.trim(); if (!txt || !room) return;
+  try { await room.emit("chat", {t:txt.slice(0, 140)}); inp.value = ""; }
+  catch (err){ inp.value = ""; inp.placeholder = err?.code === "not_permitted" ? "Você só pode olhar esta sala, não falar." : "Não deu para enviar. Tente de novo."; }
+});
+
+/* código caindo nas telas do programador */
+const GLYPHS = "アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789{}[]<>=+*/;:$#ABCDEFXZ";
+const RAIN = [...document.querySelectorAll("canvas.rain")].map(cv => {
+  const fs = Math.max(9, Math.round(cv.height / 11)), cols = Math.ceil(cv.width / fs);
+  return {cv, ctx:cv.getContext("2d"), fs, drops:Array.from({length:cols}, () => Math.random() * -20)};
+});
+function rainFrame(){
+  for (const r of RAIN){
+    const {ctx, cv, fs} = r;
+    ctx.fillStyle = "rgba(1,6,3,.09)"; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.font = `${fs}px "IBM Plex Mono",monospace`;
+    r.drops.forEach((y, i) => {
+      const ch = GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x = i * fs, py = y * fs;
+      ctx.fillStyle = "#22C55E"; ctx.fillText(ch, x, py - fs);
+      ctx.fillStyle = "#E8FFF0"; ctx.fillText(GLYPHS[Math.floor(Math.random() * GLYPHS.length)], x, py);
+      r.drops[i] = py > cv.height && Math.random() > .9 ? Math.random() * -4 : y + 1;
+    });
+  }
+}
+if (reduced) for (let i = 0; i < 40; i++) rainFrame();
+else setInterval(() => { if (!document.hidden) rainFrame(); }, 70);
+centerOn(P.x, P.y);
+setTimeout(() => { run(AG[0], "wave"); bubble(P, "Use as setas para andar"); }, 900);
+</script>
+
+</body></html>
