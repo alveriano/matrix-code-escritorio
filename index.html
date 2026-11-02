@@ -308,32 +308,147 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 <aside class="card" id="card" hidden></aside>
 <div class="padctl" aria-label="Controles do personagem"><button data-pad="U" aria-label="Andar para cima">▲</button><button data-pad="L" aria-label="Andar para a esquerda">◀</button><button data-pad="D" aria-label="Andar para baixo">▼</button><button data-pad="R" aria-label="Andar para a direita">▶</button><button data-pad="T" id="padTalk" disabled>Falar</button></div>
 
-<script>{ let r; window.NET = new Promise(f => r = f); window.NET_OK = v => r(v); setTimeout(() => r(null), 15000); }</script>
+<style>
+.gate{position:fixed;inset:0;z-index:50;display:flex;overflow:auto;padding:16px;background:rgba(3,10,6,.82);backdrop-filter:blur(6px)}
+.gate[hidden]{display:none}
+.gate form{margin:auto;width:min(380px,100%);background:#0d1a12;border:1px solid #1f3a29;border-radius:14px;padding:22px;color:#E8FFF0;font:15px "IBM Plex Sans",system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.gate h2{margin:0 0 4px;font:900 30px "Big Shoulders Display",sans-serif;letter-spacing:.02em;color:#4ADE80}
+.gate p{margin:0 0 14px;color:#a7c4b2;font-size:14px}
+.gate .tabs{display:flex;gap:6px;margin-bottom:14px}
+.gate .tabs button{flex:1;padding:8px;border-radius:8px;border:1px solid #1f3a29;background:transparent;color:#a7c4b2;font:inherit;cursor:pointer}
+.gate .tabs button[aria-selected="true"]{background:#16A34A;border-color:#16A34A;color:#fff}
+.gate label{display:block;font-size:13px;color:#a7c4b2;margin:10px 0 4px}
+.gate input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1f3a29;background:#06100a;color:#E8FFF0;font:inherit}
+.gate input:focus{outline:2px solid #22C55E;outline-offset:1px}
+.gate .go{width:100%;margin-top:16px;padding:11px;border:0;border-radius:8px;background:#22C55E;color:#03140a;font:600 15px inherit;cursor:pointer}
+.gate .go:disabled{opacity:.6;cursor:wait}
+.gate .msg{min-height:20px;margin-top:10px;font-size:13px;color:#fbbf24}
+.gate .link{background:none;border:0;color:#86efac;font:inherit;font-size:13px;padding:0;margin-top:8px;cursor:pointer;text-decoration:underline}
+</style>
+<div class="gate" id="gate" hidden>
+  <form id="gateForm" novalidate>
+    <h2>Matrix Code</h2>
+    <p>Entre no escritório para ver e conversar com quem está aqui.</p>
+    <div class="tabs" role="tablist"><button type="button" role="tab" data-gt="in" aria-selected="true">Entrar</button><button type="button" role="tab" data-gt="up" aria-selected="false">Criar conta</button></div>
+    <div id="gNameRow" hidden><label for="gName">Seu nome no escritório</label><input id="gName" maxlength="24" autocomplete="nickname"></div>
+    <label for="gEmail">E-mail</label><input id="gEmail" type="email" autocomplete="email" required>
+    <label for="gPass">Senha</label><input id="gPass" type="password" minlength="8" autocomplete="current-password" required>
+    <button class="go" id="gGo">Entrar</button>
+    <button type="button" class="link" id="gForgot">Esqueci minha senha</button>
+    <div class="msg" id="gMsg" role="status"></div>
+  </form>
+</div>
+<script>{ let r; window.NET = new Promise(f => r = f); window.NET_OK = v => r(v); }</script>
 <script type="module">
-/* sala ao vivo sem login: conexão direta entre navegadores (Trystero) */
-const resolve = window.NET_OK;
-try {
-  const {joinRoom, selfId} = await import("https://esm.sh/trystero@0.25.4");
-  const r = joinRoom({appId: "matrix-code-escritorio-2026"}, "andar-1");
-  const pres = r.makeAction("pres"), chat = r.makeAction("chat");
-  const peers = new Map(), peerFns = [], chatFns = [];
-  let mine = null, timer = null, lastAt = 0;
-  const list = () => [{peer: selfId, isMe: true, kind: "viewer", presence: mine}, ...[...peers].map(([id, p]) => ({peer: id, isMe: false, kind: "viewer", presence: p}))];
-  const notify = () => { const l = list(); peerFns.forEach(f => f({peers: l})); };
-  const ok = d => d && typeof d === "object" && JSON.stringify(d).length < 2000;
-  pres.onMessage = (d, {peerId}) => { if (!ok(d)) return; peers.set(peerId, d); notify(); };
-  chat.onMessage = (d, {peerId}) => { if (!ok(d) || !peers.has(peerId)) return; chatFns.forEach(f => f({data: d, peer: peerId, isMe: false})); };
-  r.onPeerJoin = id => { if (mine) pres.send(mine, {target: id}); };
-  r.onPeerLeave = id => { peers.delete(id); notify(); };
-  const flush = () => { timer = null; lastAt = Date.now(); if (mine) pres.send(mine); };
-  resolve({
-    presence(p){ mine = p; if (!timer) timer = setTimeout(flush, Math.max(0, 70 - (Date.now() - lastAt))); return Promise.resolve(); },
-    onPeers(f){ peerFns.push(f); f({peers: list()}); },
-    peers: list,
-    on(t, f){ if (t === "chat") chatFns.push(f); },
-    async emit(t, d){ if (t !== "chat") return; await chat.send(d); chatFns.forEach(f => f({data: d, peer: selfId, isMe: true, sameTab: true})); }
-  });
-} catch (e) { console.warn("sala ao vivo indisponível", e); resolve(null); }
+/* contas + sala ao vivo pela internet (Supabase) */
+const URL_ = "https://ekkxiwasmwhhotblbvpi.supabase.co", KEY = "sb_publishable_kCjF76j4D6gfVlE3ixjwAg_fwFRJohb", TOPIC = "andar-1";
+const $g = s => document.querySelector(s);
+const {createClient} = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/+esm");
+const sb = createClient(URL_, KEY);
+let modeUp = false;
+const setMode = up => {
+  modeUp = up;
+  document.querySelectorAll("[data-gt]").forEach(b => b.setAttribute("aria-selected", String((b.dataset.gt === "up") === up)));
+  $g("#gNameRow").hidden = !up; $g("#gGo").textContent = up ? "Criar conta" : "Entrar";
+  $g("#gPass").autocomplete = up ? "new-password" : "current-password"; $g("#gMsg").textContent = "";
+};
+document.querySelectorAll("[data-gt]").forEach(b => b.onclick = () => setMode(b.dataset.gt === "up"));
+const say = t => $g("#gMsg").textContent = t;
+const ERR = {"Invalid login credentials":"E-mail ou senha errados.","Email not confirmed":"Confirme seu e-mail antes: abra o link que enviamos.","User already registered":"Esse e-mail já tem conta. Use Entrar."};
+$g("#gateForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $g("#gEmail").value.trim(), password = $g("#gPass").value, nome = $g("#gName").value.trim();
+  if (!email || !password) return say("Preencha e-mail e senha.");
+  if (modeUp && !nome) return say("Escolha um nome.");
+  if (modeUp && password.length < 8) return say("A senha precisa de pelo menos 8 caracteres.");
+  $g("#gGo").disabled = true; say("");
+  try {
+    if (modeUp){
+      const {data, error} = await sb.auth.signUp({email, password, options:{data:{nome:nome.slice(0, 24)}, emailRedirectTo:location.origin + location.pathname}});
+      if (error) throw error;
+      if (!data.session){ say("Conta criada! Abra o e-mail de confirmação que enviamos e depois volte aqui para entrar."); setMode(false); }
+    } else {
+      const {error} = await sb.auth.signInWithPassword({email, password}); if (error) throw error;
+    }
+  } catch (err){ say(ERR[err.message] || "Não deu certo: " + err.message); }
+  $g("#gGo").disabled = false;
+});
+$g("#gForgot").onclick = async () => {
+  const email = $g("#gEmail").value.trim(); if (!email) return say("Escreva seu e-mail acima e clique de novo.");
+  const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo:location.origin + location.pathname});
+  say(error ? "Não deu certo: " + error.message : "Se o e-mail tiver conta, chega um link para trocar a senha.");
+};
+
+/* botão de sair no topo */
+const who = document.createElement("button"); who.className = "pill"; who.hidden = true; who.title = "Sair da conta";
+$g(".controls").prepend(who);
+who.onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+/* sala: presença = quem está e o visual; broadcast = posição e chat */
+let ch = null, me = null, myName = "", mine = null, lastPos = "", posTimer = null, lastPosAt = 0, lastLook = "";
+const pos = new Map(), nomes = {}, peerFns = [], chatFns = [];
+const ok = d => d && typeof d === "object" && JSON.stringify(d).length < 2000;
+function list(){
+  const st = ch ? ch.presenceState() : {}, out = [{peer:me, isMe:true, kind:"viewer", presence:mine}];
+  for (const id of Object.keys(st)) if (id !== me){
+    const look = st[id][0] || {}, p = pos.get(id) || {x:look.x, y:look.y};
+    out.push({peer:id, isMe:false, kind:"viewer", presence:{...p, skin:look.skin, name:nomes[id] || ""}});
+  }
+  return out;
+}
+async function fetchNames(){
+  const ids = Object.keys(ch.presenceState()).filter(id => !(id in nomes)); if (!ids.length) return;
+  ids.forEach(id => nomes[id] = "");
+  const {data} = await sb.from("perfis").select("id,nome").in("id", ids);
+  (data || []).forEach(r => nomes[r.id] = r.nome); notify();
+}
+const notify = () => { const l = list(); peerFns.forEach(f => f({peers:l})); };
+function sendPos(){
+  posTimer = null; lastPosAt = Date.now(); if (!mine || !ch) return;
+  const p = {x:mine.x, y:mine.y, f:mine.f, w:mine.w}; lastPos = JSON.stringify(p);
+  ch.send({type:"broadcast", event:"pos", payload:{...p, id:me}});
+}
+async function join(session){
+  if (ch) return;
+  me = session.user.id;
+  const {data} = await sb.from("perfis").select("nome").eq("id", me).maybeSingle();
+  myName = data?.nome || session.user.user_metadata?.nome || "Visitante";
+  who.textContent = "👤 " + myName + " · Sair"; who.hidden = false;
+  await sb.realtime.setAuth(session.access_token);
+  ch = sb.channel(TOPIC, {config:{private:true, presence:{key:me}, broadcast:{self:false}}});
+  ch.on("presence", {event:"sync"}, () => { const st = ch.presenceState(); for (const k of pos.keys()) if (!st[k]) pos.delete(k); notify(); fetchNames(); })
+    .on("broadcast", {event:"pos"}, ({payload:d}) => { if (!ok(d) || typeof d.id !== "string") return; pos.set(d.id, {x:+d.x, y:+d.y, f:!!d.f, w:!!d.w}); notify(); })
+    .on("broadcast", {event:"chat"}, ({payload:d}) => { if (!ok(d) || typeof d.id !== "string") return; chatFns.forEach(f => f({data:d, peer:d.id, isMe:false})); })
+    .subscribe(st => { if (st === "SUBSCRIBED"){ lastLook = ""; NET_OK(api); api.presence(mine || {}); } });
+  setInterval(() => { if (mine && ch) sendPos(); }, 3000);
+}
+const api = {
+  presence(p){
+    mine = {...p, name:myName}; if (!ch) return Promise.resolve();
+    const look = JSON.stringify(p.skin || {});
+    if (look !== lastLook){ lastLook = look; ch.track({skin:p.skin, x:p.x, y:p.y}); }
+    const now = JSON.stringify({x:p.x, y:p.y, f:p.f, w:p.w});
+    if (now !== lastPos && !posTimer) posTimer = setTimeout(sendPos, Math.max(0, 200 - (Date.now() - lastPosAt)));
+    return Promise.resolve();
+  },
+  onPeers(f){ peerFns.push(f); f({peers:list()}); },
+  peers: list,
+  on(t, f){ if (t === "chat") chatFns.push(f); },
+  async emit(t, d){
+    if (t !== "chat" || !ch) return;
+    const r = await ch.send({type:"broadcast", event:"chat", payload:{...d, id:me}});
+    if (r !== "ok") throw new Error(r);
+    chatFns.forEach(f => f({data:d, peer:me, isMe:true, sameTab:true}));
+  }
+};
+sb.auth.onAuthStateChange((ev, session) => {
+  if (ev === "PASSWORD_RECOVERY"){
+    const np = prompt("Escolha uma senha nova (mínimo 8 caracteres):");
+    if (np && np.length >= 8) sb.auth.updateUser({password:np}).then(({error}) => alert(error ? "Não deu certo: " + error.message : "Senha trocada!"));
+  }
+  if (session){ $g("#gate").hidden = true; setTimeout(() => join(session)); }
+  else if (!ch){ $g("#gate").hidden = false; }
+});
 </script>
 
 <script>
