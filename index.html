@@ -1279,6 +1279,8 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const VOZ = {on:false, rec:null, wait:null, waitT:0, speaking:false};
 const norm = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const vozMsg = t => $("#vozMsg").textContent = t;
+/* como o reconhecimento de voz costuma escrever cada nome */
+const APELIDOS = {"Xanax":["chanax","shanax","xanaxe","xanex","xenax","zanax","xanacs","chanacs","shanaks","xanaks"], "Patrick Jane":["patric","patrique","patriq","patrik"], "Helena":["elena","helen","lena"]};
 function falar(a, txt){
   txt = String(txt || "").replace(/\p{Extended_Pictographic}/gu, "").replace(/\s+/g, " ").trim();
   if (!("speechSynthesis" in window) || !txt) return Promise.resolve();
@@ -1296,7 +1298,7 @@ async function ordem(txt){
   const w = txt.split(/\s+/); let a = null, rest = "";
   for (let i = 0; i < w.length && !a; i++){
     const nw = norm(w[i]).replace(/[^a-z0-9]/g, "");
-    const ag = AG.find(x => norm(x.n.split(" ")[0]) === nw);
+    const ag = AG.find(x => norm(x.n.split(" ")[0]) === nw || (APELIDOS[x.n] || []).includes(nw));
     if (ag){ a = ag; rest = w.slice(i + 1).join(" ").replace(/^[,.:;!?\s-]+/, ""); }
   }
   if (!a && VOZ.wait && Date.now() < VOZ.waitT){ a = VOZ.wait; rest = txt; }
