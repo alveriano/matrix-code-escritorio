@@ -681,6 +681,7 @@ const PUBLIC = true;
 const DEPTS = [
   {t:"Edição de Vídeo", c:"#D9A13B", a:[
     ["Patrick Jane","video","Editor de vídeo do CowTalk. Pega o vídeo em bruto e entrega o corte pronto no Modelo 1, 3 ou 4.","Use o agente Patrick Jane para editar corte 6.mp4 no modelo 4",["Renderizando um corte…","Conferindo a folha de quadros","Loudness em -16 LUFS"]],
+    ["Lisbon","slides","Carrosséis do CowTalk. Lê a transcrição do episódio e entrega um carrossel animado de 6 slides, com título e legenda para o Instagram.","Use o agente Lisbon para fazer um carrossel da transcrição do episódio novo",["Minerando os números do episódio","Animando o slide da capa","Conferindo as citações","Escrevendo a legenda"]],
   ]},
   {t:"Sua sala", c:"#22C55E", room:"recep", a:[
     ["Helena","papers","Sua secretária. Anota tudo o que você pede no prédio e o que você contar para ela, e todo dia às 20:00 entrega o relatório do dia.","",["Organizando a papelada","Anotando seus pedidos","Arquivando os relatórios","Conferindo a agenda"]],
@@ -754,7 +755,7 @@ function spriteSVG(k, shirt){
 }
 /* visuais próprios dos agentes */
 const PJ_SKIN = {g:"m", skin:"#E9B98F", hair:"#2A2018", style:"lado", pants:"#23293A", glasses:true, phones:true, jacket:"#2B3A55", tie:"#7A2E2E", shirt:"#EDE6D6"};
-const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo", pants:"#6B5A7A", skirt:true, earrings:true, shirt:"#F5CFDC"}, "Patrick Jane":PJ_SKIN, "Xanax":{g:"m", skin:"#C68A5E", hair:"#1B1B1F", style:"raspado", pants:"#1F2A24", beard:true, glasses:true, phones:true, shirt:"#14532D"}, "Roger":{g:"m", skin:"#E0AC84", hair:"#B9B2A8", style:"curto", pants:"#2F3A4F", beard:true, glasses:true, jacket:"#3B3B3B", tie:"#C78A1E", shirt:"#F2EEE4"}};
+const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo", pants:"#6B5A7A", skirt:true, earrings:true, shirt:"#F5CFDC"}, "Patrick Jane":PJ_SKIN, "Lisbon":{g:"f", skin:"#EBC2A0", hair:"#2A1A12", style:"longo", pants:"#1F2533", earrings:true, jacket:"#2B2B30", shirt:"#F2EEE4"}, "Xanax":{g:"m", skin:"#C68A5E", hair:"#1B1B1F", style:"raspado", pants:"#1F2A24", beard:true, glasses:true, phones:true, shirt:"#14532D"}, "Roger":{g:"m", skin:"#E0AC84", hair:"#B9B2A8", style:"curto", pants:"#2F3A4F", beard:true, glasses:true, jacket:"#3B3B3B", tie:"#C78A1E", shirt:"#F2EEE4"}};
 
 /* ---------- planta ---------- */
 /* duas fileiras de três salas com o corredor no meio; a altura acompanha o formato da janela, para o andar ocupar a tela toda */
@@ -1084,10 +1085,11 @@ setInterval(() => {
 
 /* ---------- pedidos ---------- */
 const BOTH = new Set(["Xanax","Roger"]);
-const LOCAL = new Set(["Patrick Jane","Cortes CowTalk","Briefing de Carrossel","Carrossel Tweet","Modelo 1 · Motion","Modelo 3 · Ritmo","Modelo 4 · Tipográfico","Transcrição","Plano de Edição"]);
+const LOCAL = new Set(["Patrick Jane","Lisbon","Cortes CowTalk","Briefing de Carrossel","Carrossel Tweet","Modelo 1 · Motion","Modelo 3 · Ritmo","Modelo 4 · Tipográfico","Transcrição","Plano de Edição"]);
 const IDEAS = {
   "Xanax":["Revisar o código do site da Matrix Code","Script que renomeia os vídeos da pasta bruto"],
   "Patrick Jane":["Editar corte 6.mp4 no modelo 4 — Ciro @siqueira.ciro","Editar corte 7.mp4 no modelo 3"],
+  "Lisbon":["Carrossel da transcrição do episódio novo","Carrossel sobre nitrogênio que não vira leite"],
   "Roger":["Como foi a última semana no Instagram?","Qual corte virar carrossel esta semana?","Fazer a revisão do mês com a apresentação"],
   "Cortes CowTalk":["Achar os melhores cortes do episódio novo"], "Briefing de Carrossel":["Briefing de carrossel a partir do corte 5"],
   "Carrossel Tweet":["Carrossel tweet sobre vaca tranquila na ordenha"], "Modelo 1 · Motion":["Editar corte 7.mp4"], "Modelo 3 · Ritmo":["Editar corte 8.mp4"],
@@ -1643,7 +1645,7 @@ const VOZ = {on:false, rec:null, wait:null, waitT:0, speaking:false};
 const norm = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const vozMsg = t => $("#vozMsg").textContent = t;
 /* como o reconhecimento de voz costuma escrever cada nome */
-const APELIDOS = {"Xanax":["chanax","shanax","xanaxe","xanex","xenax","zanax","xanacs","chanacs","shanaks","xanaks"], "Patrick Jane":["patric","patrique","patriq","patrik"], "Helena":["elena","helen","lena"], "Roger":["rogi","rojer","rodger","hoger","roge","rogê","rogers"]};
+const APELIDOS = {"Xanax":["chanax","shanax","xanaxe","xanex","xenax","zanax","xanacs","chanacs","shanaks","xanaks"], "Patrick Jane":["patric","patrique","patriq","patrik"], "Lisbon":["lisboa","lisbom","lisbo","lis bon","lisbone"], "Helena":["elena","helen","lena"], "Roger":["rogi","rojer","rodger","hoger","roge","rogê","rogers"]};
 function falar(a, txt){
   txt = String(txt || "").replace(/\p{Extended_Pictographic}/gu, "").replace(/\s+/g, " ").trim();
   if (!("speechSynthesis" in window) || !txt) return Promise.resolve();
@@ -1698,7 +1700,7 @@ function ouvir(on){
     for (let i = e.resultIndex; i < e.results.length; i++){
       if (!e.results[i].isFinal || VOZ.speaking) continue;
       const t = e.results[i][0].transcript; $("#vozIn").value = t;
-      ordem(t).then(ok => { if (!ok) vozMsg(`Ouvi “${t}”. Comece pelo nome: Patrick, Xanax, Roger ou Helena.`); });
+      ordem(t).then(ok => { if (!ok) vozMsg(`Ouvi “${t}”. Comece pelo nome: Patrick, Lisbon, Xanax, Roger ou Helena.`); });
     }
   };
   r.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture"){ ouvir(false); VOZ.blocked = true; ditado(); } };
@@ -1712,7 +1714,7 @@ function ditado(){
 $("#vozBtn").addEventListener("click", () => { if ("speechSynthesis" in window) speechSynthesis.getVoices(); if (VOZ.blocked) return ditado(); ouvir(!VOZ.on); });
 $("#voz").addEventListener("submit", async e => {
   e.preventDefault(); const inp = $("#vozIn"), t = inp.value; inp.value = "";
-  if (!(await ordem(t))) vozMsg("Comece pelo nome do agente: Patrick, Xanax, Roger ou Helena.");
+  if (!(await ordem(t))) vozMsg("Comece pelo nome do agente: Patrick, Lisbon, Xanax, Roger ou Helena.");
 });
 if (typeof PUBLIC !== "undefined"){ $("#voz").hidden = true; $("#vozMsg").hidden = true; }
 
