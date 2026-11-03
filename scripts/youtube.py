@@ -4,7 +4,7 @@
 Roda no GitHub Actions logo depois do robô do Instagram. Precisa de dois segredos do repositório:
   YOUTUBE_API_KEY  chave de API do Google Cloud com a YouTube Data API v3 ligada
   IG_TOKEN         o mesmo token do Instagram, que deixa gravar pela função ig_gravar
-Gasta uns 3 pontos da cota de 10.000 por dia a cada rodada.
+Gasta uns 10 pontos da cota de 10.000 por dia a cada rodada (cerca de 2.900 por dia).
 Não imprime números nem segredos: o log deste repositório é público.
 """
 import datetime, json, os, sys, urllib.error, urllib.parse, urllib.request
@@ -14,10 +14,14 @@ SUPABASE = "https://ekkxiwasmwhhotblbvpi.supabase.co/rest/v1/rpc/ig_gravar"
 CHAVE_PUBLICA = "sb_publishable_kCjF76j4D6gfVlE3ixjwAg_fwFRJohb"
 
 
-def youtube(recurso, **params):
+def youtube_pagina(recurso, **params):
     q = urllib.parse.urlencode({"key": os.environ["YOUTUBE_API_KEY"].strip(), **params})
     with urllib.request.urlopen(f"https://www.googleapis.com/youtube/v3/{recurso}?{q}", timeout=60) as r:
-        return json.load(r).get("items", [])
+        return json.load(r)
+
+
+def youtube(recurso, **params):
+    return youtube_pagina(recurso, **params).get("items", [])
 
 
 def gravar(nome, linhas):
@@ -41,11 +45,18 @@ try:
     resumo = {"titulo": canal["snippet"]["title"], "inscritos": None if st.get("hiddenSubscriberCount") else numero(st, "subscriberCount"),
               "views": numero(st, "viewCount"), "videos": numero(st, "videoCount")}
     uploads = canal["contentDetails"]["relatedPlaylists"]["uploads"]
-    ids = [i["contentDetails"]["videoId"] for i in youtube("playlistItems", part="contentDetails", playlistId=uploads, maxResults=50)]
+    ids, pagina = [], None
+    while len(ids) < 1000:  # todos os vídeos do canal, 50 por página
+        r = youtube_pagina("playlistItems", part="contentDetails", playlistId=uploads, maxResults=50, **({"pageToken": pagina} if pagina else {}))
+        ids += [i["contentDetails"]["videoId"] for i in r.get("items", [])]
+        pagina = r.get("nextPageToken")
+        if not pagina:
+            break
+    itens = [v for k in range(0, len(ids), 50) for v in youtube("videos", part="snippet,statistics,contentDetails", id=",".join(ids[k:k + 50]))]
     videos = []
-    for v in youtube("videos", part="snippet,statistics,contentDetails", id=",".join(ids)) if ids else []:
+    for v in itens:
         s = v.get("statistics", {})
-        videos.append({"id": v["id"], "titulo": v["snippet"]["title"][:200], "date": v["snippet"]["publishedAt"][:10],
+        videos.append({"id": v["id"], "titulo": v["snippet"]["title"][:120], "date": v["snippet"]["publishedAt"][:10],
                        "duracao": v["contentDetails"].get("duration"), "views": numero(s, "viewCount"),
                        "likes": numero(s, "likeCount"), "comments": numero(s, "commentCount")})
     gravar("yt_canal", [resumo])

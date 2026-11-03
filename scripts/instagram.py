@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """Busca os números do Instagram do CowTalk no Windsor.ai e grava no Supabase.
 
-Roda no GitHub Actions a cada 15 minutos. Precisa de dois segredos do repositório:
+Roda no GitHub Actions a cada 5 minutos. Precisa de dois segredos do repositório:
   WINDSOR_API_KEY  chave de API do Windsor.ai
   IG_TOKEN         token que deixa gravar na tabela public.instagram (função ig_gravar)
 Não imprime números nem segredos: o log deste repositório é público.
 """
-import json, os, sys, urllib.error, urllib.parse, urllib.request
+import datetime, json, os, sys, urllib.error, urllib.parse, urllib.request
 
 SUPABASE = "https://ekkxiwasmwhhotblbvpi.supabase.co/rest/v1/rpc/ig_gravar"
 CHAVE_PUBLICA = "sb_publishable_kCjF76j4D6gfVlE3ixjwAg_fwFRJohb"
+INICIO = "2025-12-01"  # a conta começou a ter alcance em 10/12/2025; o Instagram guarda só 2 anos
+HOJE = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).date().isoformat()
 CONSULTAS = {
     "perfil": {"fields": "username,followers_count,media_count"},
-    "dias": {"fields": "date,reach,views,accounts_engaged,total_interactions,likes,comments,shares,saves", "date_preset": "last_180dT"},
+    "dias": {"fields": "date,reach,views,accounts_engaged,total_interactions,likes,comments,shares,saves", "date_from": INICIO, "date_to": HOJE},
     "seg": {"fields": "date,follower_count_1d", "date_preset": "last_30d"},
     "posts": {"fields": "date,media_type,media_caption,media_permalink,media_views,media_shares,media_saved", "date_preset": "last_30d"},
 }
