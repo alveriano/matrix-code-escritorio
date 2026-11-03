@@ -398,7 +398,7 @@ h1{font-size:30px;line-height:1;letter-spacing:.02em}
   </div>
   <div class="controls">
     <span class="pill online" id="online" hidden>🟢 1 online</span>
-    <button class="pill" id="igBtn">📊 Instagram</button>
+    <button class="pill" id="igBtn">📊 Instagram</button><button class="pill" id="ytBtn">▶️ YouTube</button>
     <button class="pill" id="czBtn">🎨 Personalizar</button>
         <button class="pill" id="roam" aria-pressed="false" title="Quando desligado, os agentes ficam nas mesas e só saem quando você mandar">🚶 Deixar andar</button>
     <button class="pill" id="pause" aria-pressed="false">⏸ Pausar</button>
@@ -1760,6 +1760,7 @@ function igRender(){
   const body = $("#igBody"), hero = $("#igHero");
   const p = IG.perfil?.[0], novos30 = (IG.seg || []).reduce((t, r) => t + (r.follower_count_1d || 0), 0);
   if (p){ $("#igSub").textContent = `@${p.username} · ${fmt(p.media_count)} publicações`; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
+  const yc = IG.yt_canal?.[0]; if (yc?.inscritos != null) $("#ytBtn").textContent = `▶️ YouTube · ${fmt(yc.inscritos)}`;
   $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + (typeof PUBLIC !== "undefined" ? " · atualiza sozinho a cada 5 min" : " · atualiza sozinho a cada 10 min") : "";
   const ps = igPeriodos();
   const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2);
@@ -1802,6 +1803,7 @@ function ytRender(){
   $("#igTitle").textContent = "YouTube"; $("#igSub").textContent = c ? `${c.titulo} · ${fmt(c.videos)} vídeos` : "@PodcastCowtalk";
   $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + " · atualiza sozinho a cada 5 min" : "";
   if (typeof PUBLIC === "undefined"){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube aparecem no site do escritório, onde o robô do GitHub grava a cada 5 min.</p>`; return; }
+  if (c?.inscritos != null) $("#ytBtn").textContent = `▶️ YouTube · ${fmt(c.inscritos)}`;
   if (!c){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube ainda não chegaram. Eles aparecem aqui depois da próxima atualização automática.</p>`; return; }
   // o histórico guarda a última leitura de cada dia; a diferença entre dois dias é o que o canal ganhou
   const h = (IG.yt_hist || []).filter(r => r.views != null), ant = h.at(-2), sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
@@ -1862,7 +1864,8 @@ async function igAbrir(){
     IG.watches.push(mcp.watchTool("Windsor.ai", "get_data", IG_Q[nome], ev => ev.type === "data" ? igRecebe(nome, ev.result) : igErro(ev.error), {cache:IG_CACHE, refetchInterval:600000}));
   }
 }
-$("#igBtn").addEventListener("click", igAbrir);
+$("#igBtn").addEventListener("click", () => { document.querySelector('[data-rede="ig"]').click(); igAbrir(); });
+$("#ytBtn").addEventListener("click", () => { document.querySelector('[data-rede="yt"]').click(); igAbrir(); });
 $("#igX").addEventListener("click", () => { $("#ig").hidden = true; IG.aberto = false; $("#igBtn").focus(); });
 $("#ig").addEventListener("click", e => { if (e.target.id === "ig") $("#igX").click(); });
 $("#ig").addEventListener("keydown", e => { if (e.key === "Escape"){ e.stopPropagation(); $("#igX").click(); } });
