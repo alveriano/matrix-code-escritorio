@@ -289,6 +289,71 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .ig .top .dur{font-family:var(--f-mono);font-size:11px}
 .ig td.tit{text-align:left;max-width:420px;overflow:hidden;text-overflow:ellipsis}
 .ig .msg{padding:14px;border-radius:12px;background:var(--bg);color:var(--muted)}
+/* painel de números em vidro, no estilo Apple: fundo desfocado, cartões translúcidos, controles segmentados */
+.ig{--g-bg:rgba(250,250,252,.72);--g-card:rgba(255,255,255,.62);--g-line:rgba(0,0,0,.07);--g-hi:rgba(255,255,255,.9);--g-seg:rgba(118,118,128,.12);--g-on:#fff;--g-ink:#1d1d1f;--g-mut:#6e6e73;--up:#248A3D;--down:#D70015;--accent:#FF2D55;--accent-ink:#fff;--g-tint1:rgba(255,45,85,.30);--g-tint2:rgba(255,159,10,.24);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;color:var(--g-ink);padding:28px 20px;
+  background:radial-gradient(55% 45% at 12% 8%,var(--g-tint1),transparent 70%),radial-gradient(50% 50% at 92% 95%,var(--g-tint2),transparent 70%),rgba(8,10,12,.5);
+  -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%)}
+.ig[data-net="yt"]{--accent:#FF3B30;--g-tint1:rgba(255,59,48,.30);--g-tint2:rgba(255,149,0,.18)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ig{--g-bg:rgba(30,30,32,.66);--g-card:rgba(255,255,255,.06);--g-line:rgba(255,255,255,.09);--g-hi:rgba(255,255,255,.12);--g-seg:rgba(118,118,128,.24);--g-on:rgba(99,99,102,.9);--g-ink:#f5f5f7;--g-mut:#98989d;--up:#30D158;--down:#FF453A;--accent:#FF375F}
+  :root:not([data-theme="light"]) .ig[data-net="yt"]{--accent:#FF453A}}
+:root[data-theme="dark"] .ig{--g-bg:rgba(30,30,32,.66);--g-card:rgba(255,255,255,.06);--g-line:rgba(255,255,255,.09);--g-hi:rgba(255,255,255,.12);--g-seg:rgba(118,118,128,.24);--g-on:rgba(99,99,102,.9);--g-ink:#f5f5f7;--g-mut:#98989d;--up:#30D158;--down:#FF453A;--accent:#FF375F}
+:root[data-theme="dark"] .ig[data-net="yt"]{--accent:#FF453A}
+.ig .box{width:min(1120px,100%);background:var(--g-bg);border:1px solid var(--g-line);border-radius:30px;padding:28px;gap:18px;box-shadow:inset 0 1px 0 var(--g-hi),0 40px 100px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%)}
+.ig header{align-items:center;gap:14px}
+.ig header .ttl{flex:1 1 220px;min-width:0}
+.ig h2{font-family:inherit;text-transform:none;font-weight:700;font-size:30px;letter-spacing:-.025em;line-height:1.1}
+.ig .sub{color:var(--g-mut);font-size:13px}
+.ig .x{flex:0 0 32px;width:32px;height:32px;border:0;background:var(--g-seg);color:var(--g-mut);font-size:18px;font-weight:500}
+.ig .x:hover{color:var(--g-ink)}
+.ig .tabs{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background:var(--g-seg);border-radius:12px;width:auto}
+.ig .tabs button,.ig .chips button{flex:0 0 auto;border:0;background:transparent;color:var(--g-ink);border-radius:9px;padding:6px 14px;font:500 13px/1.3 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;transition:background .2s,box-shadow .2s}
+.ig .tabs button[aria-pressed="true"],.ig .chips button[aria-pressed="true"]{background:var(--g-on);color:var(--g-ink);border:0;box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+.ig .tabs.rede button[aria-pressed="true"]{color:var(--accent);font-weight:600}
+.ig .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ig .bar .when{margin-left:auto;font-size:12px;color:var(--g-mut)}
+.ig .ref{width:32px;height:32px;border-radius:999px;border:0;background:var(--g-seg);color:var(--g-ink);font-size:15px}
+.ig .faixa{color:var(--g-mut)}
+.ig .faixa input{background:var(--g-card);border:1px solid var(--g-line);border-radius:9px;color:var(--g-ink);padding:5px 9px;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ig .faixa input{color-scheme:dark}}
+:root[data-theme="dark"] .ig .faixa input{color-scheme:dark}
+.ig .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.ig .hero:empty{display:none}
+.ig .hero div,.ig .kpi,.ig .chart,.ig .top,.ig .tbl,.ig .msg{background:var(--g-card);border:1px solid var(--g-line);border-radius:20px;box-shadow:inset 0 1px 0 var(--g-hi)}
+.ig .hero div{padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.ig .hero b{font-family:inherit;font-weight:700;font-size:40px;letter-spacing:-.035em;line-height:1}
+.ig .hero div:first-child b{color:var(--accent)}
+.ig .hero span{color:var(--g-mut);font-size:13px}
+#igBody{display:grid;gap:16px}
+#igBody > p.sub{margin:0!important;font-size:12.5px;line-height:1.5}
+.ig .kpis{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.ig .kpi{padding:14px 16px}
+.ig .kpi span{color:var(--g-mut);font-size:12px;font-weight:500}
+.ig .kpi b{font-weight:650;font-size:26px;letter-spacing:-.025em;margin:4px 0 2px}
+.ig .kpi i{font-weight:500}
+.ig .up{color:var(--up)} .ig .down{color:var(--down)}
+.ig .chart{padding:18px 18px 10px}
+.ig .chart h3,.ig .tbl h3,.ig .top h3{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.ig .chart .bar{fill:var(--accent);opacity:.9} .ig .chart .bar.part{opacity:.35}
+.ig .chart text{fill:var(--g-mut);font-family:inherit}
+.ig .cmp .grid{stroke:var(--g-line)} .ig .cmp .l-at{stroke:var(--accent)} .ig .cmp .dot-at{fill:var(--accent);stroke:var(--g-on)}
+.ig .leg i{border-top-color:var(--accent)}
+.ig .chips{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;background:var(--g-seg);border-radius:10px}
+.ig .chips button{padding:4px 11px;font-size:12px;border-radius:8px}
+.ig .tip{background:var(--g-bg);border:1px solid var(--g-line);border-radius:12px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.ig .top{padding:16px}
+.ig .top li{background:transparent;border-radius:14px;padding:10px 12px;transition:background .15s}
+.ig .top li:hover{background:var(--g-seg)}
+.ig .top li + li{box-shadow:0 -1px 0 var(--g-line)}
+.ig .top .pos{font-family:inherit;font-weight:600;font-size:17px;color:var(--g-mut)}
+.ig .top .nums{color:var(--g-mut)} .ig .top .nums b.on{color:var(--accent)}
+.ig .top a,.ig a{color:var(--accent)}
+.ig .tbl{padding:16px 18px}
+.ig th{color:var(--g-mut);font-weight:500}
+.ig th,.ig td{border-bottom:1px solid var(--g-line)}
+.ig tbody tr:last-child td{border-bottom:0}
+.ig .msg{padding:16px 18px;color:var(--g-mut)}
+@media (max-width:640px){.ig{padding:10px}.ig .box{padding:18px;border-radius:24px;gap:14px}.ig h2{font-size:26px}.ig .bar .tabs{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}.ig .bar .when{order:3;flex:1 1 100%;margin-left:0}.ig .hero{grid-template-columns:1fr 1fr;gap:10px}.ig .hero div{padding:14px}.ig .hero b{font-size:26px}.ig .hero span{font-size:12px}.ig .hero div:last-child:nth-child(odd){grid-column:1/-1}.ig .kpis{grid-template-columns:1fr 1fr;gap:10px}.ig .kpi b{font-size:22px}}
 .vozbar #vozBtn[aria-pressed="true"]{background:#DC2626;border-color:#DC2626;color:#fff;animation:vozpulse 1.4s ease-in-out infinite}
 @keyframes vozpulse{50%{box-shadow:0 0 0 6px rgba(220,38,38,.25)}}
 .vozmsg{max-width:1560px;margin:4px auto 0;padding:0 14px;font-size:13px;color:var(--muted);min-height:18px}
@@ -419,11 +484,10 @@ h1{font-size:30px;line-height:1;letter-spacing:.02em}
 <p class="vozmsg" id="vozMsg" role="status"></p>
 <p class="hint">Teclado: setas ou WASD andam · Enter abre o agente perto de você · Esc fecha. Clique no chão para ir até lá. No celular, use os botões no canto.</p>
 </section>
-<section class="ig" id="ig" hidden aria-labelledby="igTitle"><div class="box">
-  <header><div><h2 id="igTitle">Instagram</h2><p class="sub" id="igSub">@cowtalk.podcast</p></div><button class="x" id="igX" aria-label="Fechar painel do Instagram">×</button></header>
-  <div class="tabs" role="group" aria-label="Rede"><button data-rede="ig" aria-pressed="true">Instagram</button><button data-rede="yt" aria-pressed="false">YouTube</button></div>
+<section class="ig" id="ig" data-net="ig" hidden aria-labelledby="igTitle"><div class="box">
+  <header><div class="ttl"><h2 id="igTitle">Instagram</h2><p class="sub" id="igSub">@cowtalk.podcast</p></div><div class="tabs rede" role="group" aria-label="Rede"><button data-rede="ig" aria-pressed="true">Instagram</button><button data-rede="yt" aria-pressed="false">YouTube</button></div><button class="x" id="igX" aria-label="Fechar painel">×</button></header>
+  <div class="bar"><div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button data-ig="per" aria-pressed="false">Personalizado</button><button data-ig="tudo" aria-pressed="false">Desde o início</button></div><span class="faixa" id="igFaixa" hidden><input type="date" id="igDe" aria-label="De"> até <input type="date" id="igAte" aria-label="Até"></span><span class="when" id="igWhen"></span><button class="ref" id="igRef" aria-label="Atualizar os números">↻</button></div>
   <div class="hero" id="igHero"></div>
-  <div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button data-ig="per" aria-pressed="false">Personalizado</button><button data-ig="tudo" aria-pressed="false">Desde o início</button><span class="faixa" id="igFaixa" hidden><input type="date" id="igDe" aria-label="De"> até <input type="date" id="igAte" aria-label="Até"></span><button id="igRef">↻ Atualizar</button><span class="when" id="igWhen"></span></div>
   <div id="igBody"><p class="msg">Buscando os números do Instagram…</p></div>
 </div></section>
 
@@ -1900,7 +1964,7 @@ function ytRender(){
   body.querySelectorAll("[data-ytb]").forEach(b => b.addEventListener("click", () => { IG.ytBar = b.dataset.ytb; ytRender(); }));
 }
 document.querySelectorAll("[data-rede]").forEach(b => b.addEventListener("click", () => {
-  IG.rede = b.dataset.rede; document.querySelectorAll("[data-rede]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  IG.rede = b.dataset.rede; $("#ig").dataset.net = IG.rede; document.querySelectorAll("[data-rede]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
   if (IG.rede === "ig") $("#igSub").textContent = IG.perfil?.[0] ? "" : "@cowtalk.podcast";
   igRender();
 }));
