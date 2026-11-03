@@ -1806,13 +1806,35 @@ function ytRender(){
   if (c?.inscritos != null) $("#ytBtn").textContent = `▶️ YouTube · ${fmt(c.inscritos)}`;
   if (!c){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube ainda não chegaram. Eles aparecem aqui depois da próxima atualização automática.</p>`; return; }
   // o histórico guarda a última leitura de cada dia; a diferença entre dois dias é o que o canal ganhou
-  const h = (IG.yt_hist || []).filter(r => r.views != null), ant = h.at(-2), sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
-  const ganho = ant ? [c.views - ant.views, c.inscritos != null && ant.inscritos != null ? c.inscritos - ant.inscritos : null] : [null, null];
-  hero.innerHTML = `<div><b>${c.inscritos == null ? "oculto" : fmt(c.inscritos)}</b><span>inscritos agora${ant ? ` · ${sinal(ganho[1])} desde ontem` : ""}</span></div><div><b>${fmt(c.views)}</b><span>visualizações no total</span></div><div><b>${sinal(ganho[0])}</b><span>${ant ? "visualizações desde ontem" : "visualizações ganhas: o histórico começa hoje"}</span></div>`;
-  const dias = h.slice(1).map((r, i) => ({date:r.date, views:r.views - h[i].views})).slice(-30);
-  const W_ = 1000, H_ = 180, bw = W_ / Math.max(dias.length, 1), mx = Math.max(...dias.map(x => x.views), 1);
-  const bars = dias.map((x, i) => { const hh = Math.max(x.views, 0) / mx * (H_ - 24), rot = dtx(x.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}); return `<g><rect class="bar" x="${i * bw + bw * .15}" y="${H_ - 18 - hh}" width="${bw * .7}" height="${Math.max(hh, 1)}" rx="3"><title>${esc(rot)}: ${fmt(x.views)} visualizações</title></rect>${dias.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(rot)}</text>` : ""}</g>`; }).join("");
-  const graf = dias.length >= 2 ? `<div class="chart"><h3>Visualizações ganhas por dia</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações ganhas por dia">${bars}</svg></div>` : `<p class="msg">O gráfico de crescimento aparece depois de alguns dias: o YouTube só dá o total, então o robô guarda uma leitura por dia e compara.</p>`;
+  // o histórico guarda a última leitura de cada dia; a diferença entre duas leituras é o que o canal ganhou no dia
+  const h = (IG.yt_hist || []).filter(r => r.views != null), vs0 = IG.yt_videos || [];
+  const hoje = h.at(-1)?.date, publicados = {}; vs0.forEach(v => publicados[v.date] = (publicados[v.date] || 0) + 1);
+  const dias = h.slice(1).map((r, i) => ({date:r.date, views:r.views - h[i].views, inscritos:r.inscritos != null && h[i].inscritos != null ? r.inscritos - h[i].inscritos : null}));
+  const key = {dia:r => r.date, sem:r => semanaDe(r.date), mes:r => r.date.slice(0, 7)}[IG.modo], g = new Map();
+  for (const r of dias){ const k = key(r); if (!g.has(k)) g.set(k, {k, views:0, inscritos:null}); const o = g.get(k); o.views += r.views; if (r.inscritos != null) o.inscritos = (o.inscritos || 0) + r.inscritos; }
+  const ps = [...g.values()].map(o => {
+    o.parcial = hoje && key({date:hoje}) === o.k;
+    o.rot = IG.modo === "dia" ? dtx(o.k).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"}) : IG.modo === "sem" ? "Sem. " + dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : dtx(o.k + "-01").toLocaleDateString("pt-BR", {month:"short", year:"2-digit"});
+    o.curto = IG.modo === "dia" ? dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : o.rot;
+    o.videos = Object.entries(publicados).filter(([d]) => key({date:d}) === o.k).reduce((t, [, n]) => t + n, 0);
+    return o;
+  }).slice(IG.modo === "dia" ? -30 : IG.modo === "sem" ? -13 : -6);
+  const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2), agora = ps.find(x => x.parcial);
+  const quando = {dia:["hoje", "ontem", "anteontem", "dia"], sem:["nesta semana", "na última semana fechada", "a semana anterior", "semana"], mes:["neste mês", "no último mês fechado", "o mês anterior", "mês"]}[IG.modo];
+  const sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
+  hero.innerHTML = `<div><b>${c.inscritos == null ? "oculto" : fmt(c.inscritos)}</b><span>inscritos agora</span></div><div><b>${fmt(c.views)}</b><span>visualizações no total</span></div><div><b>${sinal(agora?.views)}</b><span>visualizações ${quando[0]} (até agora)</span></div>`;
+  const YT_M = [["views", "Visualizações ganhas"], ["inscritos", "Inscritos ganhos"], ["videos", "Vídeos publicados"]];
+  const kpis = YT_M.map(([m, rot]) => { const a = cur?.[m], b = prev?.[m], d = a != null && b ? (a - b) / Math.abs(b) * 100 : null;
+    return `<div class="kpi"><span>${rot}</span><b>${m === "videos" ? fmt(a) : sinal(a)}</b>${d == null ? "<i>&nbsp;</i>" : `<i class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs ${quando[2]}</i>`}</div>`; }).join("");
+  const W_ = 1000, H_ = 180, bw = W_ / Math.max(ps.length, 1), mx = Math.max(...ps.map(x => x.views), 1);
+  const bars = ps.map((x, i) => { const hh = Math.max(x.views, 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - hh}" width="${bw * .7}" height="${Math.max(hh, 1)}" rx="3"><title>${esc(x.rot)}: ${fmt(x.views)} visualizações${x.parcial ? " (até agora)" : ""}</title></rect>${ps.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto)}</text>` : ""}</g>`; }).join("");
+  const desde = h[0] ? dtx(h[0].date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : "hoje";
+  const tabela = [...ps].reverse().map(x => `<tr><td>${esc(x.rot)}${x.parcial ? " · até agora" : ""}</td><td>${sinal(x.views)}</td><td>${sinal(x.inscritos)}</td><td>${fmt(x.videos)}</td></tr>`).join("");
+  const graf = ps.length ? `<p class="sub" style="margin:0 0 8px">${cur ? `${quando[1][0].toUpperCase() + quando[1].slice(1)} (${esc(cur.rot)}), comparado com ${quando[2]}. ` : ""}O YouTube só dá o total do canal, então o robô guarda uma leitura por dia desde ${desde} e calcula o que entrou em cada ${quando[3]}.</p>
+    ${cur ? `<div class="kpis">${kpis}</div>` : ""}
+    <div class="chart"><h3>Visualizações ganhas por ${quando[3]}</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações ganhas por ${quando[3]}">${bars}</svg></div>
+    <div class="tbl"><h3>Por ${quando[3]}</h3><table><thead><tr><th>${quando[3][0].toUpperCase() + quando[3].slice(1)}</th><th>Visualizações</th><th>Inscritos</th><th>Vídeos publicados</th></tr></thead><tbody>${tabela}</tbody></table></div>`
+    : `<p class="msg">O dia a dia, a semana e o mês aparecem a partir de amanhã: o YouTube só dá o total do canal, então o robô guarda uma leitura por dia desde ${desde} e compara.</p>`;
   const vs = (IG.yt_videos || []).filter(v => /^[\w-]{11}$/.test(v.id)), k = IG.ytTop;
   const med = (() => { const v = vs.map(r => r[k] || 0).sort((a, b) => a - b); return v[Math.floor(v.length / 2)] || 0; })();
   const link = v => `https://www.youtube.com/watch?v=${v.id}`, data = v => dtx(v.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"});
@@ -1828,7 +1850,6 @@ function ytRender(){
 }
 document.querySelectorAll("[data-rede]").forEach(b => b.addEventListener("click", () => {
   IG.rede = b.dataset.rede; document.querySelectorAll("[data-rede]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-  document.querySelectorAll("[data-ig]").forEach(x => x.hidden = IG.rede === "yt");
   if (IG.rede === "ig") $("#igSub").textContent = IG.perfil?.[0] ? "" : "@cowtalk.podcast";
   igRender();
 }));
