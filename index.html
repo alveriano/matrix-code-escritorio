@@ -363,7 +363,7 @@ h1{font-size:30px;line-height:1;letter-spacing:.02em}
 .controls .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .controls .pill.online{color:var(--accent);font-weight:600}
 .map{border-width:8px;border-radius:16px;box-shadow:0 0 0 1px var(--line);max-height:calc(100vh - 170px)}
-.zoom{right:20px;top:20px;gap:6px}
+.zoom{right:20px;top:auto;bottom:20px;flex-direction:row;gap:6px}
 .zoom button{width:36px;height:36px;border-radius:10px;font-size:16px;box-shadow:0 6px 16px rgba(0,0,0,.28)}
 .zoom button:hover{border-color:var(--accent)}
 .dock{margin:12px 0 0;padding:8px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:8px}
@@ -757,14 +757,38 @@ ROOMS.forEach((R, i) => {
   html += glow(R.x + R.w / 2, R.y + RH * .55, Math.min(R.w, RH) * .55, "", "rgba(255,214,150,.42)");
 });
 WALLS.forEach(w => html += `<div class="wall" style="left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px"></div>`);
-/* cada sala: um item centralizado na parede, a mesa no meio, o tapete e uma planta em cada canto */
+/* cada sala segue a mesma grade (canto esquerdo, centro e canto direito da parede; os dois cantos de baixo), com móveis do seu tema */
 const ES = ROOMS.find(r => r.key === 3), PG = ROOMS.find(r => r.key === 2);
-const naParede = (R, nome, g, o = {}) => fur(nome, R.x + R.w / 2 - FUR[nome][0] / 2, R.y + 12, g, {z:4, ...o});
-const cantos = R => fur("plant", R.x + 16, R.y + RH - 130, "plantas") + fur("plant", R.x + R.w - 56, R.y + RH - 130, "plantas");
-html += naParede(RECEP, "neon", "quadros", {lit:true}) + glow(RECEP.x + RECEP.w / 2, RECEP.y + 32, 80, "quadros", "rgba(90,255,140,.45)")
-  + naParede(ED, "painel", "estudio") + naParede(PG, "telao", "estudio", {lit:true}) + glow(PG.x + PG.w / 2, PG.y + 44, 100, "estudio", "rgba(90,255,140,.5)")
-  + naParede(ES, "metas", "quadros") + naParede(COPA, "cozinha", "moveis") + fur("mesa", COPA.x + COPA.w / 2 - 60, COPA.y + 150, "moveis");
-ROOMS.forEach(R => html += cantos(R));
+const M = (R, nome, x, y, g, o) => fur(nome, R.x + x, R.y + y, g, o);
+const parede = {
+  esq:(R, nome, g, o = {}, dx = 18) => M(R, nome, dx, 14, g, o),
+  meio:(R, nome, g, o = {}) => M(R, nome, R.w / 2 - FUR[nome][0] / 2, 12, g, {z:4, ...o}),
+  dir:(R, nome, g, o = {}) => M(R, nome, R.w - 18 - FUR[nome][0], 14, g, o)};
+const chao = {
+  esq:(R, nome, g, o = {}, dx = 16) => M(R, nome, dx, RH - 60 - FUR[nome][1], g, o),
+  dir:(R, nome, g, o = {}) => M(R, nome, R.w - 16 - FUR[nome][0], RH - 60 - FUR[nome][1], g, o)};
+const luz = (R, x, y, r, g, c) => glow(R.x + x, R.y + y, r, g, c);
+/* sua sala: arquivo, letreiro, bebedouro, sofá e o tapete da Matrix Code */
+html += parede.esq(RECEP, "arquivo", "moveis") + parede.meio(RECEP, "neon", "quadros", {lit:true}) + parede.dir(RECEP, "cooler", "moveis")
+  + chao.esq(RECEP, "sofa", "moveis") + chao.dir(RECEP, "tree", "plantas")
+  + M(RECEP, "logorug", RECEP.w / 2 - 65, Math.round(RH * .62) - 42, "tapetes", {z:3})
+  + luz(RECEP, RECEP.w / 2, 32, 80, "quadros", "rgba(90,255,140,.45)");
+/* edição: estante de equipamentos, painéis acústicos, ring light e abajur */
+html += parede.esq(ED, "estante", "estudio") + parede.meio(ED, "painel", "estudio") + parede.dir(ED, "ring", "estudio", {lit:true})
+  + chao.esq(ED, "abajur", "moveis", {lit:true}) + chao.dir(ED, "tree", "plantas")
+  + luz(ED, ED.w - 50, 56, 90, "estudio", "rgba(255,246,220,.55)") + luz(ED, 33, RH - 140, 70, "moveis");
+/* programação: servidores, telão com código, quadro da arquitetura e pufes */
+html += parede.esq(PG, "rack", "estudio", {lit:true}) + parede.esq(PG, "rack", "estudio", {lit:true}, 66) + parede.meio(PG, "telao", "estudio", {lit:true}) + parede.dir(PG, "quadro", "quadros")
+  + chao.esq(PG, "pufe", "moveis") + chao.esq(PG, "pufe", "moveis", {}, 76) + chao.dir(PG, "tree", "plantas")
+  + luz(PG, PG.w / 2, 44, 100, "estudio", "rgba(90,255,140,.5)") + luz(PG, 64, 60, 70, "estudio", "rgba(90,255,140,.35)");
+/* estratégia: estante de livros, quadro de metas, plano na parede e canto de conversa */
+html += parede.esq(ES, "estante", "moveis") + parede.meio(ES, "metas", "quadros") + parede.dir(ES, "quadro", "quadros")
+  + chao.esq(ES, "pufe", "moveis") + chao.esq(ES, "mesinha", "moveis", {}, 80) + chao.dir(ES, "tree", "plantas")
+  + luz(ES, ES.w / 2, 50, 100, "quadros", "rgba(255,206,120,.45)");
+/* copa: cozinha, geladeira, mesa no meio e plantas */
+html += parede.esq(COPA, "plant", "plantas") + parede.meio(COPA, "cozinha", "moveis") + parede.dir(COPA, "geladeira", "moveis")
+  + M(COPA, "mesa", COPA.w / 2 - 60, Math.round(RH * .42), "moveis") + chao.esq(COPA, "plant", "plantas") + chao.dir(COPA, "plant", "plantas")
+  + luz(COPA, COPA.w / 2, 30, 70, "moveis", "rgba(127,227,240,.35)");
 html += rep(10, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
 AG.forEach(a => {
   html += `<span class="chair" style="left:${a.hx - 16}px;top:${a.hy - 32}px;z-index:${Math.round(a.hy) - 2}"></span>`;
@@ -786,17 +810,17 @@ const LIGHTS = {dia:"☀️ Dia", tarde:"🌇 Fim de tarde", noite:"🌙 Noite"}
 const STYLE_N = {curto:"Curto", lado:"De lado", cacheado:"Cacheado", raspado:"Raspado", topete:"Topete", longo:"Longo", coque:"Coque", rabo:"Rabo", chanel:"Chanel"};
 const oldMe = store.get("torre-eu-skin", 0);
 function cfgDefault(){
-  return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:4,
+  return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:5,
     light:"dia", names:false, fast:false, roam:false, title:"Matrix Code", sofa:"#166534",
-    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"madeira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"madeira", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"madeira", c:"#D9A441"}, copa:{name:"Copa", floor:"madeira", c:"#84CC16"}},
+    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"carpete", c:"#D9A441"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
     deco:{plantas:true, tapetes:true, quadros:true, estudio:true, moveis:true}};
 }
 const CFG = (() => { const d = cfgDefault(), s = store.get("torre-cfg", {}) || {};
   if (s.pj){ s.ag = {...(s.ag || {}), "Patrick Jane":s.pj}; } delete s.pj;
-  if (s.v !== 2 && s.v !== 3 && s.v !== 4){ delete s.title; delete s.rooms; delete s.sofa; if (s.me && s.me.shirt === "#C78A1E") delete s.me.shirt; }
-  if (s.v !== 3 && s.v !== 4 && s.rooms){ if (s.rooms[1]){ s.rooms[2] = s.rooms[1]; delete s.rooms[1]; } if (s.rooms.recep?.name === "Recepção") s.rooms.recep.name = "Sua sala"; }
-  if (s.v !== 4 && s.rooms) for (const k in s.rooms) delete s.rooms[k].floor;
-  s.v = 4;
+  if (![2, 3, 4, 5].includes(s.v)){ delete s.title; delete s.rooms; delete s.sofa; if (s.me && s.me.shirt === "#C78A1E") delete s.me.shirt; }
+  if (![3, 4, 5].includes(s.v) && s.rooms){ if (s.rooms[1]){ s.rooms[2] = s.rooms[1]; delete s.rooms[1]; } if (s.rooms.recep?.name === "Recepção") s.rooms.recep.name = "Sua sala"; }
+  if (s.v !== 5 && s.rooms) for (const k in s.rooms) delete s.rooms[k].floor; /* cada sala volta ao piso do seu tema */
+  s.v = 5;
   const c = {...d, ...s, me:{...d.me, ...(s.me || {})}, rooms:{}, deco:{...d.deco, ...(s.deco || {})}};
   for (const k in d.rooms) c.rooms[k] = {...d.rooms[k], ...(s.rooms?.[k] || {})};
   return c; })();
