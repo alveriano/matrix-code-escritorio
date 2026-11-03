@@ -234,6 +234,10 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .ig .tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ig .tabs button{flex:0 0 auto;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent}
 .ig .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ig .box{grid-template-columns:minmax(0,1fr)}
+.ig .faixa{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.ig .faixa input{padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text,inherit);font:inherit;font-size:13px;color-scheme:dark}
+.ig .faixa[hidden]{display:none}
 .ig .tabs .when{margin-left:auto;font-size:12px;color:var(--muted)}
 .ig .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .ig .kpi{border:1px solid var(--line);border-radius:12px;padding:10px 12px}
@@ -419,7 +423,7 @@ h1{font-size:30px;line-height:1;letter-spacing:.02em}
   <header><div><h2 id="igTitle">Instagram</h2><p class="sub" id="igSub">@cowtalk.podcast</p></div><button class="x" id="igX" aria-label="Fechar painel do Instagram">×</button></header>
   <div class="tabs" role="group" aria-label="Rede"><button data-rede="ig" aria-pressed="true">Instagram</button><button data-rede="yt" aria-pressed="false">YouTube</button></div>
   <div class="hero" id="igHero"></div>
-  <div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button id="igRef">↻ Atualizar</button><span class="when" id="igWhen"></span></div>
+  <div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button data-ig="per" aria-pressed="false">Personalizado</button><button data-ig="tudo" aria-pressed="false">Desde o início</button><span class="faixa" id="igFaixa" hidden><input type="date" id="igDe" aria-label="De"> até <input type="date" id="igAte" aria-label="Até"></span><button id="igRef">↻ Atualizar</button><span class="when" id="igWhen"></span></div>
   <div id="igBody"><p class="msg">Buscando os números do Instagram…</p></div>
 </div></section>
 
@@ -1649,9 +1653,9 @@ $("#voz").addEventListener("submit", async e => {
 if (typeof PUBLIC !== "undefined"){ $("#voz").hidden = true; $("#vozMsg").hidden = true; }
 
 /* painel do Instagram (Windsor.ai): números do dia, da semana e do mês */
-const IG = {rede:"ig", ytTop:"views", modo:"dia", linha:"views", top:"media_views", posts:null, dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
+const IG = {rede:"ig", ytTop:"views", ytBar:"views", de:null, ate:null, modo:"dia", linha:"views", top:"media_views", posts:null, dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
 const IG_Q = {
-  dias:{connector:"instagram", fields:["date","reach","views","accounts_engaged","total_interactions","likes","comments","shares","saves"], date_preset:"last_180dT"},
+  dias:{connector:"instagram", fields:["date","reach","views","accounts_engaged","total_interactions","likes","comments","shares","saves"], date_from:"2025-12-01", date_to:new Date(Date.now() - 108e5).toISOString().slice(0, 10)},
   seg:{connector:"instagram", fields:["date","follower_count_1d"], date_preset:"last_30d"},
   perfil:{connector:"instagram", fields:["username","followers_count","media_count"]},
   posts:{connector:"instagram", fields:["date","media_type","media_caption","media_permalink","media_views","media_shares","media_saved"], date_preset:"last_30d"}
@@ -1661,13 +1665,32 @@ const IG_M = [["views","Visualizações"],["reach","Alcance"],["accounts_engaged
 const fmt = n => n == null || isNaN(n) ? "—" : Math.round(n).toLocaleString("pt-BR");
 const dtx = d => new Date(d + "T12:00");
 function semanaDe(d){ const x = dtx(d), wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x.toISOString().slice(0, 10); }
+const isoD = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+// "Personalizado" e "Desde o início" olham uma faixa de datas; o resto, os últimos períodos
+function igFaixa(){
+  if (IG.modo === "per") return [IG.de, IG.ate];
+  if (IG.modo === "tudo"){ const ds = (IG.dias || []).filter(r => r.views > 0 || r.reach > 0); return [ds[0]?.date || isoD(new Date()), isoD(new Date())]; }
+  return null;
+}
+function agrupaDe(fx){ if (!fx) return IG.modo; const n = (dtx(fx[1]) - dtx(fx[0])) / 864e5; return n <= 62 ? "dia" : n <= 190 ? "sem" : "mes"; }
+function igSoma(de, ate){
+  const novos = {}; (IG.seg || []).forEach(r => novos[r.date] = r.follower_count_1d);
+  const o = {n:0, novos:null};
+  for (const r of IG.dias || []) if (r.views != null && r.date >= de && r.date <= ate){
+    o.n++; for (const [m] of IG_M) if (m !== "novos" && r[m] != null) o[m] = (o[m] || 0) + r[m];
+    if (novos[r.date] != null) o.novos = (o.novos || 0) + novos[r.date];
+  }
+  const f = d => dtx(d).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"});
+  o.reachMed = o.n ? o.reach / o.n : null; o.rot = `${f(de)} a ${f(ate)}`; return o.n ? o : null;
+}
 function igPeriodos(){
   if (!IG.dias) return [];
   const novos = {}; (IG.seg || []).forEach(r => novos[r.date] = r.follower_count_1d);
   const dias = IG.dias.filter(r => r.views != null).map(r => ({...r, novos:novos[r.date]}));
-  if (IG.modo === "dia") return dias.slice(-30).map(r => ({k:r.date, rot:dtx(r.date).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"}), curto:dtx(r.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}), n:1, parcial:false, ...r, reachMed:r.reach}));
-  const key = IG.modo === "sem" ? r => semanaDe(r.date) : r => r.date.slice(0, 7), g = new Map();
-  for (const r of dias){
+  const fx = igFaixa(), gm = agrupaDe(fx), sel = fx ? dias.filter(r => r.date >= fx[0] && r.date <= fx[1]) : dias;
+  if (gm === "dia") return (fx ? sel : sel.slice(-30)).map(r => ({k:r.date, rot:dtx(r.date).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"}), curto:dtx(r.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}), n:1, parcial:false, ...r, reachMed:r.reach}));
+  const key = gm === "sem" ? r => semanaDe(r.date) : r => r.date.slice(0, 7), g = new Map();
+  for (const r of sel){
     const k = key(r); if (!g.has(k)) g.set(k, {k, n:0, novos:null});
     const o = g.get(k); o.n++;
     for (const [m] of IG_M) if (m !== "novos" && r[m] != null) o[m] = (o[m] || 0) + r[m];
@@ -1676,19 +1699,23 @@ function igPeriodos(){
   const ontem = new Date(); ontem.setDate(ontem.getDate() - 1); const oy = ontem.toISOString().slice(0, 10);
   return [...g.values()].map(o => {
     o.reachMed = o.reach / o.n;
-    if (IG.modo === "sem"){ const f = dtx(o.k); f.setDate(f.getDate() + 6); o.parcial = f.toISOString().slice(0, 10) > oy; o.rot = "Sem. " + dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}); }
+    if (gm === "sem"){ const f = dtx(o.k); f.setDate(f.getDate() + 6); o.parcial = f.toISOString().slice(0, 10) > oy; o.rot = "Sem. " + dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}); }
     else { const f = new Date(+o.k.slice(0, 4), +o.k.slice(5, 7), 0); o.parcial = f.toISOString().slice(0, 10) > oy; o.rot = dtx(o.k + "-01").toLocaleDateString("pt-BR", {month:"short", year:"2-digit"}); }
     return o;
-  }).slice(IG.modo === "sem" ? -13 : -6);
+  }).slice(fx ? 0 : gm === "sem" ? -13 : -6);
 }
 const IG_L = [["views","Visualizações"],["reach","Alcance"],["accounts_engaged","Contas engajadas"],["total_interactions","Interações"],["likes","Curtidas"],["shares","Compartilhamentos"],["saves","Salvamentos"]];
 // dia a dia dentro do período fechado mais recente, lado a lado com o período anterior de mesmo tamanho
 function igComparar(){
-  const dias = (IG.dias || []).filter(r => r.views != null); if (!dias.length) return null;
+  const dias = (IG.dias || []).filter(r => r.views != null); if (!dias.length || IG.modo === "tudo") return null;
   const por = new Map(dias.map(r => [r.date, r])), iso = d => d.toISOString().slice(0, 10);
   const soma = (d, n) => { const x = dtx(d); x.setDate(x.getDate() + n); return iso(x); };
   const ult = dias.at(-1).date; let at, an, rot, nomes;
-  if (IG.modo === "dia"){
+  if (IG.modo === "per"){
+    const n = Math.round((dtx(IG.ate) - dtx(IG.de)) / 864e5) + 1; if (n < 2 || n > 120) return null;
+    at = Array.from({length:n}, (_, i) => soma(IG.de, i)); an = at.map(d => soma(d, -n));
+    rot = at.map(d => dtx(d).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"})); nomes = ["Período escolhido", "Período anterior"];
+  } else if (IG.modo === "dia"){
     const ini = soma(ult, -29); at = Array.from({length:30}, (_, i) => soma(ini, i)); an = at.map(d => soma(d, -30));
     rot = at.map(d => dtx(d).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"})); nomes = ["Últimos 30 dias", "30 dias antes"];
   } else if (IG.modo === "sem"){
@@ -1763,34 +1790,40 @@ function igRender(){
   const yc = IG.yt_canal?.[0]; if (yc?.inscritos != null) $("#ytBtn").textContent = `▶️ YouTube · ${fmt(yc.inscritos)}`;
   $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + (typeof PUBLIC !== "undefined" ? " · atualiza sozinho a cada 5 min" : " · atualiza sozinho a cada 10 min") : "";
   const ps = igPeriodos();
-  const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2);
+  const fx = igFaixa(), gm = agrupaDe(fx), fechados = ps.filter(x => !x.parcial);
+  let cur = fechados.at(-1), prev = fechados.at(-2);
+  if (fx){
+    cur = igSoma(fx[0], fx[1]); const n = Math.round((dtx(fx[1]) - dtx(fx[0])) / 864e5) + 1, b = dtx(fx[0]); b.setDate(b.getDate() - 1); const a = dtx(isoD(b)); a.setDate(a.getDate() - n + 1);
+    prev = IG.modo === "per" ? igSoma(isoD(a), isoD(b)) : null;
+  }
   // os novos seguidores só existem para os últimos 30 dias: um mês que começa antes disso sairia contado pela metade
-  const iniSeg = (IG.seg || []).map(r => r.date).sort()[0], mesInteiro = IG.modo !== "mes" || (cur && iniSeg && iniSeg <= cur.k + "-01");
-  const quando = {dia:"ontem", sem:"na última semana fechada", mes:"no último mês fechado"}[IG.modo];
+  const iniSeg = (IG.seg || []).map(r => r.date).sort()[0], mesInteiro = fx ? !!(iniSeg && iniSeg <= fx[0]) : IG.modo !== "mes" || (cur && iniSeg && iniSeg <= cur.k + "-01");
+  const quando = {dia:"ontem", sem:"na última semana fechada", mes:"no último mês fechado", per:"no período", tudo:"desde o início"}[IG.modo];
   const novosH = mesInteiro ? [cur?.novos, `novos seguidores ${quando}`] : [novos30, "novos seguidores nos últimos 30 dias (o Instagram só guarda 30 dias)"];
+  if (IG.modo === "tudo" && p){ novosH[0] = p.followers_count; novosH[1] = "seguidores ganhos desde o início"; }
   const sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
   hero.innerHTML = p ? `<div><b>${fmt(p.followers_count)}</b><span>seguidores agora</span></div><div><b>${sinal(novosH[0])}</b><span>${novosH[1]}</span></div><div><b>${fmt(cur?.views)}</b><span>visualizações ${quando}${cur ? ` (${esc(cur.rot)})` : ""}</span></div>` : "";
   if (!ps.length){ if (IG.dias) body.innerHTML = `<p class="msg">Ainda não há números para mostrar.</p>`; return; }
-  const nome = {dia:["Ontem","anteontem"], sem:["Última semana fechada","a semana anterior"], mes:["Último mês fechado","o mês anterior"]}[IG.modo];
+  const nome = {dia:["Ontem","anteontem"], sem:["Última semana fechada","a semana anterior"], mes:["Último mês fechado","o mês anterior"], per:["Período escolhido","o período anterior"], tudo:["Desde o início da conta",""]}[IG.modo];
   const val = (o, m) => m === "reach" && IG.modo !== "dia" ? o?.reachMed : o?.[m];
   const kpis = IG_M.map(([m, rot]) => {
     const a = val(cur, m), b = val(prev, m), d = a != null && b ? (a - b) / b * 100 : null;
     return `<div class="kpi"><span>${rot}${m === "reach" && IG.modo !== "dia" ? " (média/dia)" : ""}</span><b>${fmt(a)}</b>${d == null ? `<i>&nbsp;</i>` : `<i class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs ${nome[1]}</i>`}</div>`;
   }).join("");
   const W_ = 1000, H_ = 180, bw = W_ / ps.length, mx = Math.max(...ps.map(x => x.views || 0), 1);
-  const bars = ps.map((x, i) => { const h = (x.views || 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - h}" width="${bw * .7}" height="${Math.max(h, 1)}" rx="3"><title>${esc(x.rot)}: ${fmt(x.views)} visualizações${x.parcial ? " (parcial)" : ""}</title></rect>${ps.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto || x.rot)}</text>` : ""}</g>`; }).join("");
+  const bars = ps.map((x, i) => { const h = (x.views || 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - h}" width="${bw * .7}" height="${Math.max(h, 1)}" rx="3"><title>${esc(x.rot)}: ${fmt(x.views)} visualizações${x.parcial ? " (parcial)" : ""}</title></rect>${i % Math.ceil(ps.length / 12) === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto || x.rot)}</text>` : ""}</g>`; }).join("");
   const linhas = [...ps].reverse().map(x => `<tr><td>${esc(x.rot)}${x.parcial ? " · parcial" : ""}</td>${IG_M.map(([m]) => `<td>${fmt(val(x, m))}</td>`).join("")}</tr>`).join("");
   const c = igComparar(), media = IG.linha === "reach", tot = vs => { const ok = vs.filter(x => x != null); return ok.length ? ok.reduce((t, x) => t + x, 0) / (media ? ok.length : 1) : null; };
   const tA = c && tot(c.at), tB = c && tot(c.an), dT = tA != null && tB ? (tA - tB) / tB * 100 : null, rotL = IG_L.find(([m]) => m === IG.linha)[1];
   const cmpHtml = c ? `<div class="chart"><div class="cmp-top"><h3>Comparar: ${esc(rotL)} dia a dia</h3><div class="chips" role="group" aria-label="Número do gráfico de linhas">${IG_L.map(([m, r]) => `<button data-igl="${m}" aria-pressed="${m === IG.linha}">${r}</button>`).join("")}</div></div>
     <div class="leg"><span><i></i>${esc(c.nomes[0])}${media ? " (média/dia)" : ""}: <b>${fmt(tA)}</b></span><span><i class="ant"></i>${esc(c.nomes[1])}${media ? " (média/dia)" : ""}: <b>${fmt(tB)}</b></span>${dT == null ? "" : `<span class="${dT >= 0 ? "up" : "down"}">${dT >= 0 ? "▲" : "▼"} ${Math.abs(dT).toFixed(0)}% ${media ? "na média por dia" : "no total"}</span>`}</div>
     <div class="cmp" id="igCmp">${igLinhasSvg(c)}<div class="tip" id="igTip" hidden></div></div></div>` : "";
-  body.innerHTML = `<p class="sub" style="margin:0 0 8px">${nome[0]}${cur ? ` (${esc(cur.rot)})` : ""}, comparado com ${nome[1]}. O Instagram fecha os números de cada dia só no dia seguinte.</p>
+  body.innerHTML = `<p class="sub" style="margin:0 0 8px">${nome[0]}${cur ? ` (${esc(cur.rot)})` : ""}${nome[1] ? `, comparado com ${nome[1]}` : ""}. O Instagram fecha os números de cada dia só no dia seguinte${IG.modo === "tudo" ? " e só guarda os últimos 2 anos; o alcance da conta começa em 10/12/2025" : ""}.</p>
     <div class="kpis">${kpis}</div>
     ${cmpHtml}
-    <div class="chart"><h3>Visualizações por ${IG.modo === "dia" ? "dia" : IG.modo === "sem" ? "semana" : "mês"}</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações">${bars}</svg></div>
+    <div class="chart"><h3>Visualizações por ${gm === "dia" ? "dia" : gm === "sem" ? "semana" : "mês"}</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações">${bars}</svg></div>
     ${igTopHtml()}
-    <div class="tbl"><h3>Todos os números</h3><table><thead><tr><th>${IG.modo === "dia" ? "Dia" : IG.modo === "sem" ? "Semana" : "Mês"}</th>${IG_M.map(([m, r]) => `<th>${r}${m === "reach" && IG.modo !== "dia" ? " /dia" : ""}</th>`).join("")}</tr></thead><tbody>${linhas}</tbody></table></div>`;
+    <div class="tbl"><h3>Todos os números</h3><table><thead><tr><th>${gm === "dia" ? "Dia" : gm === "sem" ? "Semana" : "Mês"}</th>${IG_M.map(([m, r]) => `<th>${r}${m === "reach" && IG.modo !== "dia" ? " /dia" : ""}</th>`).join("")}</tr></thead><tbody>${linhas}</tbody></table></div>`;
   if (c) igLinhasHover(c);
   body.querySelectorAll("[data-igt]").forEach(b => b.addEventListener("click", () => { IG.top = b.dataset.igt; igRender(); }));
   body.querySelectorAll("[data-igl]").forEach(b => b.addEventListener("click", () => { IG.linha = b.dataset.igl; igRender(); }));
@@ -1805,48 +1838,61 @@ function ytRender(){
   if (typeof PUBLIC === "undefined"){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube aparecem no site do escritório, onde o robô do GitHub grava a cada 5 min.</p>`; return; }
   if (c?.inscritos != null) $("#ytBtn").textContent = `▶️ YouTube · ${fmt(c.inscritos)}`;
   if (!c){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube ainda não chegaram. Eles aparecem aqui depois da próxima atualização automática.</p>`; return; }
-  // o histórico guarda a última leitura de cada dia; a diferença entre dois dias é o que o canal ganhou
-  // o histórico guarda a última leitura de cada dia; a diferença entre duas leituras é o que o canal ganhou no dia
-  const h = (IG.yt_hist || []).filter(r => r.views != null), vs0 = IG.yt_videos || [];
-  const hoje = h.at(-1)?.date, publicados = {}; vs0.forEach(v => publicados[v.date] = (publicados[v.date] || 0) + 1);
+  // o YouTube só dá o total do canal: o robô guarda a última leitura de cada dia e a diferença entre duas leituras é o que o canal ganhou
+  const h = (IG.yt_hist || []).filter(r => r.views != null), todos = (IG.yt_videos || []).filter(v => /^[\w-]{11}$/.test(v.id) && v.date);
   const dias = h.slice(1).map((r, i) => ({date:r.date, views:r.views - h[i].views, inscritos:r.inscritos != null && h[i].inscritos != null ? r.inscritos - h[i].inscritos : null}));
-  const key = {dia:r => r.date, sem:r => semanaDe(r.date), mes:r => r.date.slice(0, 7)}[IG.modo], g = new Map();
-  for (const r of dias){ const k = key(r); if (!g.has(k)) g.set(k, {k, views:0, inscritos:null}); const o = g.get(k); o.views += r.views; if (r.inscritos != null) o.inscritos = (o.inscritos || 0) + r.inscritos; }
-  const ps = [...g.values()].map(o => {
-    o.parcial = hoje && key({date:hoje}) === o.k;
-    o.rot = IG.modo === "dia" ? dtx(o.k).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"}) : IG.modo === "sem" ? "Sem. " + dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : dtx(o.k + "-01").toLocaleDateString("pt-BR", {month:"short", year:"2-digit"});
-    o.curto = IG.modo === "dia" ? dtx(o.k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : o.rot;
-    o.videos = Object.entries(publicados).filter(([d]) => key({date:d}) === o.k).reduce((t, [, n]) => t + n, 0);
+  const hoje = isoD(new Date()), ini = todos.map(v => v.date).sort()[0] || hoje, desde = h[0] ? dtx(h[0].date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"}) : "hoje";
+  const fx = IG.modo === "per" ? [IG.de, IG.ate] : IG.modo === "tudo" ? [ini, hoje] : null, gm = agrupaDe(fx);
+  const key = {dia:d => d, sem:d => semanaDe(d), mes:d => d.slice(0, 7)}[gm];
+  const soma = (de, ate) => {
+    const o = {views:null, inscritos:null, videos:0, viewsVid:0};
+    for (const r of dias) if (r.date >= de && r.date <= ate){ o.views = (o.views || 0) + r.views; if (r.inscritos != null) o.inscritos = (o.inscritos || 0) + r.inscritos; }
+    for (const v of todos) if (v.date >= de && v.date <= ate){ o.videos++; o.viewsVid += v.views || 0; }
     return o;
-  }).slice(IG.modo === "dia" ? -30 : IG.modo === "sem" ? -13 : -6);
-  const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2), agora = ps.find(x => x.parcial);
-  const quando = {dia:["hoje", "ontem", "anteontem", "dia"], sem:["nesta semana", "na última semana fechada", "a semana anterior", "semana"], mes:["neste mês", "no último mês fechado", "o mês anterior", "mês"]}[IG.modo];
-  const sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
-  hero.innerHTML = `<div><b>${c.inscritos == null ? "oculto" : fmt(c.inscritos)}</b><span>inscritos agora</span></div><div><b>${fmt(c.views)}</b><span>visualizações no total</span></div><div><b>${sinal(agora?.views)}</b><span>visualizações ${quando[0]} (até agora)</span></div>`;
-  const YT_M = [["views", "Visualizações ganhas"], ["inscritos", "Inscritos ganhos"], ["videos", "Vídeos publicados"]];
+  };
+  // períodos seguidos, sem buracos: a faixa escolhida ou os últimos 30 dias, 13 semanas ou 6 meses
+  const [de, ate] = fx || (() => { const x = dtx(hoje); x.setDate(x.getDate() - {dia:29, sem:7 * 12 + 6, mes:200}[gm]); return [isoD(x), hoje]; })();
+  const ks = []; for (let x = dtx(de); isoD(x) <= ate; x.setDate(x.getDate() + 1)){ const k = key(isoD(x)); if (ks.at(-1)?.k !== k) ks.push({k, de:isoD(x), ate:isoD(x)}); else ks.at(-1).ate = isoD(x); }
+  const ps = ks.map(({k, de, ate}) => ({k, ...soma(de, ate), parcial:k === key(hoje),
+    rot:gm === "dia" ? dtx(k).toLocaleDateString("pt-BR", {weekday:"short", day:"2-digit", month:"2-digit"}) : gm === "sem" ? "Sem. " + dtx(k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : dtx(k + "-01").toLocaleDateString("pt-BR", {month:"short", year:"2-digit"}),
+    curto:gm === "dia" ? dtx(k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : gm === "sem" ? dtx(k).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : dtx(k + "-01").toLocaleDateString("pt-BR", {month:"short", year:"2-digit"})})).slice(fx ? 0 : gm === "dia" ? -30 : gm === "sem" ? -13 : -6);
+  const nDias = fx ? Math.round((dtx(fx[1]) - dtx(fx[0])) / 864e5) + 1 : 0, antes = n => { const b = dtx(fx[0]); b.setDate(b.getDate() - 1); const a = dtx(isoD(b)); a.setDate(a.getDate() - n + 1); return [isoD(a), isoD(b)]; };
+  const fechados = ps.filter(x => !x.parcial);
+  const cur = IG.modo === "tudo" ? {views:c.views, inscritos:c.inscritos, videos:c.videos, viewsVid:soma(ini, hoje).viewsVid} : fx ? soma(fx[0], fx[1]) : fechados.at(-1);
+  const prev = IG.modo === "per" ? soma(...antes(nDias)) : fx ? null : fechados.at(-2);
+  const fdt = d => dtx(d).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"});
+  const Q = {dia:["ontem", "anteontem"], sem:["na última semana fechada", "a semana anterior"], mes:["no último mês fechado", "o mês anterior"], per:[`de ${fdt(IG.de)} a ${fdt(IG.ate)}`, "o período anterior"], tudo:[`desde o primeiro vídeo (${fdt(ini)})`, ""]}[IG.modo];
+  const unid = {dia:"dia", sem:"semana", mes:"mês"}[gm], sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
+  const agora = ps.find(x => x.parcial);
+  hero.innerHTML = `<div><b>${c.inscritos == null ? "oculto" : fmt(c.inscritos)}</b><span>inscritos agora</span></div><div><b>${fmt(c.views)}</b><span>visualizações no total</span></div>` +
+    (IG.modo === "tudo" ? `<div><b>${fmt(c.videos)}</b><span>vídeos desde ${esc(fdt(ini))}</span></div>` : IG.modo === "per" ? `<div><b>${sinal(cur.views)}</b><span>visualizações ganhas no período</span></div>` : `<div><b>${sinal(agora?.views)}</b><span>visualizações ${{dia:"hoje", sem:"nesta semana", mes:"neste mês"}[gm]} (até agora)</span></div>`);
+  const YT_M = IG.modo === "tudo" ? [["views", "Visualizações"], ["inscritos", "Inscritos"], ["videos", "Vídeos publicados"]] : [["views", "Visualizações ganhas"], ["inscritos", "Inscritos ganhos"], ["videos", "Vídeos publicados"], ["viewsVid", "Visualizações dos vídeos lançados"]];
   const kpis = YT_M.map(([m, rot]) => { const a = cur?.[m], b = prev?.[m], d = a != null && b ? (a - b) / Math.abs(b) * 100 : null;
-    return `<div class="kpi"><span>${rot}</span><b>${m === "videos" ? fmt(a) : sinal(a)}</b>${d == null ? "<i>&nbsp;</i>" : `<i class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs ${quando[2]}</i>`}</div>`; }).join("");
-  const W_ = 1000, H_ = 180, bw = W_ / Math.max(ps.length, 1), mx = Math.max(...ps.map(x => x.views), 1);
-  const bars = ps.map((x, i) => { const hh = Math.max(x.views, 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - hh}" width="${bw * .7}" height="${Math.max(hh, 1)}" rx="3"><title>${esc(x.rot)}: ${fmt(x.views)} visualizações${x.parcial ? " (até agora)" : ""}</title></rect>${ps.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto)}</text>` : ""}</g>`; }).join("");
-  const desde = h[0] ? dtx(h[0].date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}) : "hoje";
-  const tabela = [...ps].reverse().map(x => `<tr><td>${esc(x.rot)}${x.parcial ? " · até agora" : ""}</td><td>${sinal(x.views)}</td><td>${sinal(x.inscritos)}</td><td>${fmt(x.videos)}</td></tr>`).join("");
-  const graf = ps.length ? `<p class="sub" style="margin:0 0 8px">${cur ? `${quando[1][0].toUpperCase() + quando[1].slice(1)} (${esc(cur.rot)}), comparado com ${quando[2]}. ` : ""}O YouTube só dá o total do canal, então o robô guarda uma leitura por dia desde ${desde} e calcula o que entrou em cada ${quando[3]}.</p>
+    return `<div class="kpi"><span>${rot}</span><b>${IG.modo === "tudo" || m === "videos" || m === "viewsVid" ? fmt(a) : sinal(a)}</b>${d == null ? "<i>&nbsp;</i>" : `<i class="${d >= 0 ? "up" : "down"}">${d >= 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(0)}% vs ${Q[1]}</i>`}</div>`; }).join("");
+  const YT_B = [["views", "Visualizações ganhas"], ["videos", "Vídeos publicados"], ["viewsVid", "Visualizações dos vídeos lançados"]];
+  const bm = IG.ytBar === "views" && !ps.some(x => x.views != null) ? "viewsVid" : IG.ytBar, rotB = YT_B.find(([m]) => m === bm)[1];
+  const W_ = 1000, H_ = 180, bw = W_ / Math.max(ps.length, 1), mx = Math.max(...ps.map(x => x[bm] || 0), 1), cada = Math.ceil(ps.length / 12);
+  const bars = ps.map((x, i) => { const hh = Math.max(x[bm] || 0, 0) / mx * (H_ - 24); return `<g><rect class="bar${x.parcial ? " part" : ""}" x="${i * bw + bw * .15}" y="${H_ - 18 - hh}" width="${bw * .7}" height="${Math.max(hh, 1)}" rx="3"><title>${esc(x.rot)}: ${x[bm] == null ? "sem leitura" : fmt(x[bm])} · ${esc(rotB.toLowerCase())}${x.parcial ? " (até agora)" : ""}</title></rect>${i % cada === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(x.curto)}</text>` : ""}</g>`; }).join("");
+  const tabela = [...ps].reverse().map(x => `<tr><td>${esc(x.rot)}${x.parcial ? " · até agora" : ""}</td><td>${sinal(x.views)}</td><td>${sinal(x.inscritos)}</td><td>${fmt(x.videos)}</td><td>${fmt(x.viewsVid)}</td></tr>`).join("");
+  const nota = `As visualizações e os inscritos ganhos existem desde ${desde}: o YouTube só dá o total do canal, então o robô guarda uma leitura por dia e compara. "Visualizações dos vídeos lançados" soma o que os vídeos publicados em cada ${unid} têm hoje.`;
+  const graf = `<p class="sub" style="margin:0 0 8px">${IG.modo === "tudo" ? "Desde o início do canal" : `${Q[0][0].toUpperCase() + Q[0].slice(1)}`}${Q[1] ? `, comparado com ${Q[1]}` : ""}. ${nota}</p>
     ${cur ? `<div class="kpis">${kpis}</div>` : ""}
-    <div class="chart"><h3>Visualizações ganhas por ${quando[3]}</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações ganhas por ${quando[3]}">${bars}</svg></div>
-    <div class="tbl"><h3>Por ${quando[3]}</h3><table><thead><tr><th>${quando[3][0].toUpperCase() + quando[3].slice(1)}</th><th>Visualizações</th><th>Inscritos</th><th>Vídeos publicados</th></tr></thead><tbody>${tabela}</tbody></table></div>`
-    : `<p class="msg">O dia a dia, a semana e o mês aparecem a partir de amanhã: o YouTube só dá o total do canal, então o robô guarda uma leitura por dia desde ${desde} e compara.</p>`;
-  const vs = (IG.yt_videos || []).filter(v => /^[\w-]{11}$/.test(v.id)), k = IG.ytTop;
+    <div class="chart"><div class="cmp-top"><h3>${esc(rotB)} por ${unid}</h3><div class="chips" role="group" aria-label="Número do gráfico">${YT_B.map(([m, r]) => `<button data-ytb="${m}" aria-pressed="${m === bm}">${r}</button>`).join("")}</div></div><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico: ${esc(rotB)} por ${unid}">${bars}</svg></div>
+    <div class="tbl"><h3>Por ${unid}</h3><table><thead><tr><th>${unid[0].toUpperCase() + unid.slice(1)}</th><th>Visualizações ganhas</th><th>Inscritos ganhos</th><th>Vídeos publicados</th><th>Visualizações dos vídeos lançados</th></tr></thead><tbody>${tabela}</tbody></table></div>`;
+  const vs = IG.modo === "per" ? todos.filter(v => v.date >= IG.de && v.date <= IG.ate) : todos, k = IG.ytTop;
   const med = (() => { const v = vs.map(r => r[k] || 0).sort((a, b) => a - b); return v[Math.floor(v.length / 2)] || 0; })();
-  const link = v => `https://www.youtube.com/watch?v=${v.id}`, data = v => dtx(v.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"});
+  const link = v => `https://www.youtube.com/watch?v=${v.id}`, data = v => fdt(v.date);
   const lista = [...vs].sort((a, b) => (b[k] || 0) - (a[k] || 0)).slice(0, 8).map((v, i) => {
     const n = (m, rot) => `<span><b class="${m === k ? "on" : ""}">${fmt(v[m])}</b> ${rot}</span>`;
     return `<li><span class="pos">${i + 1}</span><div class="cap"><p title="${esc(v.titulo)}">${esc(v.titulo)}</p><small>${esc(data(v))} · <span class="dur">${esc(ytDur(v.duracao))}</span>${(v[k] || 0) >= 2 * med && med > 0 ? " · 🔥 " + ((v[k] || 0) / med).toFixed(1).replace(".", ",") + "× a mediana" : ""} · <a href="${link(v)}" target="_blank" rel="noopener">abrir ↗</a></small></div><div class="nums">${n("views", "visualiz.")}${n("likes", "curt.")}${n("comments", "coment.")}</div></li>`;
   }).join("");
-  const top = vs.length ? `<div class="top"><div class="cmp-top"><h3>Melhores vídeos entre os ${fmt(vs.length)} mais recentes</h3><div class="chips" role="group" aria-label="Ordenar vídeos por">${YT_TOP.map(([m, r]) => `<button data-ytt="${m}" aria-pressed="${m === k}">${r}</button>`).join("")}</div></div><ol>${lista}</ol>
-    <p class="nota">Mediana de ${fmt(med)} ${YT_TOP.find(([m]) => m === k)[1].toLowerCase()} por vídeo. Vídeos novos ainda estão juntando números.</p></div>` : "";
-  const linhas = vs.map(v => `<tr><td>${esc(data(v))}</td><td class="tit" title="${esc(v.titulo)}"><a href="${link(v)}" target="_blank" rel="noopener" style="color:inherit">${esc(v.titulo)}</a></td><td>${esc(ytDur(v.duracao))}</td><td>${fmt(v.views)}</td><td>${fmt(v.likes)}</td><td>${fmt(v.comments)}</td></tr>`).join("");
-  body.innerHTML = `${graf}${top}<div class="tbl"><h3>Vídeos recentes</h3><table><thead><tr><th>Data</th><th>Título</th><th>Duração</th><th>Visualizações</th><th>Curtidas</th><th>Comentários</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+  const top = vs.length ? `<div class="top"><div class="cmp-top"><h3>Melhores vídeos ${IG.modo === "per" ? "lançados no período" : "desde o início"}</h3><div class="chips" role="group" aria-label="Ordenar vídeos por">${YT_TOP.map(([m, r]) => `<button data-ytt="${m}" aria-pressed="${m === k}">${r}</button>`).join("")}</div></div><ol>${lista}</ol>
+    <p class="nota">${fmt(vs.length)} vídeos · mediana de ${fmt(med)} ${YT_TOP.find(([m]) => m === k)[1].toLowerCase()} por vídeo. Vídeos novos ainda estão juntando números.</p></div>` : IG.modo === "per" ? `<p class="msg">Nenhum vídeo lançado nesse período.</p>` : "";
+  const recentes = [...vs].sort((a, b) => a.date < b.date ? 1 : -1).slice(0, IG.modo === "per" ? 200 : 50);
+  const linhas = recentes.map(v => `<tr><td>${esc(data(v))}</td><td class="tit" title="${esc(v.titulo)}"><a href="${link(v)}" target="_blank" rel="noopener" style="color:inherit">${esc(v.titulo)}</a></td><td>${esc(ytDur(v.duracao))}</td><td>${fmt(v.views)}</td><td>${fmt(v.likes)}</td><td>${fmt(v.comments)}</td></tr>`).join("");
+  body.innerHTML = `${graf}${top}${recentes.length ? `<div class="tbl"><h3>${IG.modo === "per" ? "Vídeos lançados no período" : "Últimos 50 vídeos"}</h3><table><thead><tr><th>Data</th><th>Título</th><th>Duração</th><th>Visualizações</th><th>Curtidas</th><th>Comentários</th></tr></thead><tbody>${linhas}</tbody></table></div>` : ""}`;
   body.querySelectorAll("[data-ytt]").forEach(b => b.addEventListener("click", () => { IG.ytTop = b.dataset.ytt; ytRender(); }));
+  body.querySelectorAll("[data-ytb]").forEach(b => b.addEventListener("click", () => { IG.ytBar = b.dataset.ytb; ytRender(); }));
 }
 document.querySelectorAll("[data-rede]").forEach(b => b.addEventListener("click", () => {
   IG.rede = b.dataset.rede; document.querySelectorAll("[data-rede]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -1887,10 +1933,12 @@ async function igAbrir(){
 }
 $("#igBtn").addEventListener("click", () => { document.querySelector('[data-rede="ig"]').click(); igAbrir(); });
 $("#ytBtn").addEventListener("click", () => { document.querySelector('[data-rede="yt"]').click(); igAbrir(); });
+{ const a = new Date(); a.setDate(a.getDate() - 1); const d = new Date(a); d.setDate(d.getDate() - 29); IG.ate = isoD(a); IG.de = isoD(d); $("#igDe").value = IG.de; $("#igAte").value = IG.ate; $("#igDe").max = $("#igAte").max = isoD(new Date()); }
+for (const id of ["#igDe", "#igAte"]) $(id).addEventListener("change", () => { let de = $("#igDe").value, ate = $("#igAte").value; if (!de || !ate) return; if (de > ate) [de, ate] = [ate, de]; IG.de = de; IG.ate = ate; igRender(); });
 $("#igX").addEventListener("click", () => { $("#ig").hidden = true; IG.aberto = false; $("#igBtn").focus(); });
 $("#ig").addEventListener("click", e => { if (e.target.id === "ig") $("#igX").click(); });
 $("#ig").addEventListener("keydown", e => { if (e.key === "Escape"){ e.stopPropagation(); $("#igX").click(); } });
-document.querySelectorAll("[data-ig]").forEach(b => b.addEventListener("click", () => { IG.modo = b.dataset.ig; document.querySelectorAll("[data-ig]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); igRender(); }));
+document.querySelectorAll("[data-ig]").forEach(b => b.addEventListener("click", () => { IG.modo = b.dataset.ig; $("#igFaixa").hidden = IG.modo !== "per"; document.querySelectorAll("[data-ig]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); igRender(); }));
 $("#igRef").addEventListener("click", async () => { if (typeof PUBLIC !== "undefined") return igSite(); const mcp = await window.claude?.use?.("mcp"); if (!mcp) return; for (const n of ["dias", "seg", "perfil"]) try { igRecebe(n, await mcp.callTool("Windsor.ai", "get_data", IG_Q[n], {cache:{...IG_CACHE, refresh:true}})); } catch (e){ igErro(e); } });
 
 /* código caindo nas telas do programador */
