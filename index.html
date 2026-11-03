@@ -119,6 +119,11 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .room[data-floor="xadrez"]{background:conic-gradient(#ECE5D7 25%,#C9BBA2 0 50%,#ECE5D7 0 75%,#C9BBA2 0) 0 0/52px 52px}
 .room .rug{left:20%;right:20%;top:44%;bottom:20%;border-radius:12px;opacity:.85;background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--c) 42%,transparent) 0 9px,color-mix(in srgb,var(--c) 30%,transparent) 9px 18px);box-shadow:inset 0 0 0 4px color-mix(in srgb,var(--c) 70%,#000),inset 0 0 0 7px rgba(255,255,255,.35)}
 .world.no-tapetes .room .rug{display:none}
+.room .rug{left:30%;right:30%}
+.room[data-db="0"] .rug{top:20%;bottom:44%}
+.room[data-db="0"] .plaque{bottom:auto;top:16px}
+.room[data-key="reuniao"] .rug{left:16%;right:16%;top:24%;bottom:24%}
+.sp.npc{pointer-events:none;cursor:default}
 .plaque{position:absolute;left:14px;bottom:16px;display:flex;align-items:center;gap:7px;padding:5px 11px 5px 9px;border-radius:7px;background:rgba(20,24,30,.84);color:#F2EEE4;font-family:var(--f-display);font-weight:900;font-size:17px;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 3px 8px rgba(0,0,0,.25);max-width:calc(100% - 28px);white-space:nowrap;overflow:hidden}
 .plaque i{flex:0 0 9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
 .wall{box-shadow:0 3px 7px rgba(0,0,0,.3)}
@@ -363,7 +368,7 @@ h1{font-size:30px;line-height:1;letter-spacing:.02em}
 .controls .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .controls .pill.online{color:var(--accent);font-weight:600}
 .map{border-width:8px;border-radius:16px;box-shadow:0 0 0 1px var(--line);max-height:calc(100vh - 170px)}
-.zoom{right:20px;top:auto;bottom:20px;flex-direction:row;gap:6px}
+.zoom{right:24px;top:50%;bottom:auto;transform:translateY(-50%);flex-direction:row;gap:6px}
 .zoom button{width:36px;height:36px;border-radius:10px;font-size:16px;box-shadow:0 6px 16px rgba(0,0,0,.28)}
 .zoom button:hover{border-color:var(--accent)}
 .dock{margin:12px 0 0;padding:8px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:8px}
@@ -675,10 +680,9 @@ const PJ_SKIN = {g:"m", skin:"#E9B98F", hair:"#2A2018", style:"lado", pants:"#23
 const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo", pants:"#6B5A7A", skirt:true, earrings:true, shirt:"#F5CFDC"}, "Patrick Jane":PJ_SKIN, "Xanax":{g:"m", skin:"#C68A5E", hair:"#1B1B1F", style:"raspado", pants:"#1F2A24", beard:true, glasses:true, phones:true, shirt:"#14532D"}, "Roger":{g:"m", skin:"#E0AC84", hair:"#B9B2A8", style:"curto", pants:"#2F3A4F", beard:true, glasses:true, jacket:"#3B3B3B", tie:"#C78A1E", shirt:"#F2EEE4"}};
 
 /* ---------- planta ---------- */
-/* fileira de cima: recepção, edição, design, copa · corredor · fileira de baixo: roteiro, estratégia, anúncios, métricas */
-/* a altura das salas acompanha o formato da janela, para o andar ocupar a tela toda */
-const W = 1980, RH = Math.round(Math.min(700, Math.max(380, W * (innerHeight - 170) / Math.max(320, innerWidth - 50) - 110))), CORR = 110, H = RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
-const TOP = [{k:"recep", w:0}, {k:0, cols:1, w:0}, {k:2, cols:1, w:0}, {k:3, cols:1, w:0}, {k:"copa", w:0}];
+/* duas fileiras de três salas com o corredor no meio; a altura acompanha o formato da janela, para o andar ocupar a tela toda */
+const W = 1800, CORR = 110, RH = Math.round(Math.min(480, Math.max(360, (W * (innerHeight - 180) / Math.max(320, innerWidth - 40) - CORR) / 2))), H = 2 * RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
+const TOP = [{k:"recep", w:0}, {k:0, cols:1, w:0}, {k:2, cols:1, w:0}], BOTTOM = [{k:3, cols:1, w:0}, {k:"reuniao", w:0}, {k:"copa", w:0}];
 const ROOMS = [];
 function rowRooms(list, y, db){
     const fixed = list.reduce((n, s) => n + (s.w || 0), 0), free = list.filter(s => !s.w);
@@ -687,13 +691,13 @@ function rowRooms(list, y, db){
   let x = 0;
   list.forEach(s => { ROOMS.push({key:s.k, x, y, w:s.w, h:RH, db, cols:s.cols, dx:x + s.w / 2, din:db ? y + RH - 26 : y + 26, dout:CY}); x += s.w; });
 }
-rowRooms(TOP, 0, true);
+rowRooms(TOP, 0, true); rowRooms(BOTTOM, RH + CORR, false);
 const RECEP = ROOMS.find(r => r.key === "recep"), COPA = ROOMS.find(r => r.key === "copa");
 const AG = [];
 DEPTS.forEach((d, di) => {
   const room = ROOMS.find(r => r.key === (d.room ?? di)); room.dept = di;
   const cols = room.cols || 1, x0 = d.at ? room.x + d.at[0] - CELL / 2 : room.x + (room.w - cols * CELL) / 2;
-  const rowsY = room.db ? [room.y + Math.round(RH * .26), room.y + Math.round(RH * .26) + 134] : [room.y + 150, room.y + 284];
+  const rowsY = room.db ? [room.y + Math.round(RH * .26), room.y + Math.round(RH * .26) + 134] : [room.y + RH - Math.round(RH * .26) - 38, room.y + RH - Math.round(RH * .26) - 172];
   d.a.forEach((a, i) => {
     const col = i % cols, row = Math.floor(i / cols), cx = x0 + col * CELL + CELL / 2, deskY = d.at ? room.y + d.at[1] : rowsY[row], seatY = deskY - 4;
     AG.push({k:AG.length, di, n:a[0], s:a[1], v:a[2], cmd:a[3], says:a[4], c:d.c, room, deskX:cx - 6, deskY, hx:cx + 44, hy:seatY,
@@ -738,6 +742,8 @@ const FUR = {
   metas:[110, 66, `<svg viewBox="0 0 110 66"><rect width="110" height="66" rx="3" fill="#2B2F38"/><rect x="3" y="3" width="104" height="60" fill="#F7F3E8"/><path d="M12 50h86" stroke="#9AA3AD" stroke-width="1"/>${[[16,30],[30,24],[44,18],[58,22],[72,12],[86,8]].map(([x, h], i) => `<rect x="${x}" y="${50 - h * 1.2}" width="9" height="${h * 1.2}" rx="1" fill="${i > 3 ? "#D9A441" : "#3E5A4C"}"/>`).join("")}<path d="M14 40l14-6 14-8 14 4 14-12 14-6" fill="none" stroke="#C8553D" stroke-width="1.6" stroke-dasharray="3 2"/><circle cx="98" cy="12" r="2.4" fill="#C8553D"/></svg>`],
   pufe:[56, 44, `<svg viewBox="0 0 56 44">${SH(28, 41, 26)}<path d="M6 34q-6-20 10-28 12-6 24 0 16 8 10 28-8 6-22 6T6 34z" fill="#166534"/><path d="M14 14q8-6 18-3" stroke="rgba(255,255,255,.25)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`],
   telao:[150, 62, `<svg viewBox="0 0 150 62"><rect width="150" height="62" rx="4" fill="#0B0E12"/></svg><canvas class="rain" width="288" height="112" style="position:absolute;left:3px;top:3px;width:144px;height:56px;border-radius:2px"></canvas>`],
+  tv:[150, 66, `<svg viewBox="0 0 150 66"><rect width="150" height="62" rx="4" fill="#14181F"/><rect x="4" y="4" width="142" height="54" rx="2" fill="#F7F3E8"/><rect x="12" y="11" width="62" height="6" rx="2" fill="#2F3A4F"/><rect x="12" y="22" width="44" height="3" rx="1.5" fill="#9AA3AD"/><rect x="12" y="28" width="50" height="3" rx="1.5" fill="#9AA3AD"/>${[[86,20],[100,30],[114,24],[128,38]].map(([x, h]) => `<rect x="${x}" y="${50 - h}" width="9" height="${h}" rx="1" fill="#8E7CF0"/>`).join("")}<circle cx="34" cy="44" r="9" fill="none" stroke="#D9A441" stroke-width="5" stroke-dasharray="40 60"/><rect x="70" y="62" width="10" height="4" fill="#14181F"/></svg>`],
+  reuniao:[250, 112, `<svg viewBox="0 0 250 112">${SH(125, 108, 120)}${rep(4, i => `<rect x="${38 + i * 50}" y="0" width="26" height="22" rx="8" fill="#2B2F38"/><rect x="${38 + i * 50}" y="90" width="26" height="22" rx="8" fill="#2B2F38"/>`)}<rect x="0" y="44" width="16" height="26" rx="8" fill="#2B2F38"/><rect x="234" y="44" width="16" height="26" rx="8" fill="#2B2F38"/><rect x="14" y="16" width="222" height="80" rx="38" fill="#6E4A2F"/><rect x="14" y="14" width="222" height="76" rx="36" fill="#9C6B43"/><rect x="30" y="24" width="190" height="56" rx="26" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="2"/>${rep(4, i => `<rect x="${44 + i * 50}" y="22" width="16" height="11" rx="1.5" fill="#F2EEE4"/><rect x="${44 + i * 50}" y="72" width="16" height="11" rx="1.5" fill="#F2EEE4"/>`)}<rect x="110" y="44" width="30" height="16" rx="3" fill="#1A1F25"/><rect x="112" y="46" width="26" height="12" rx="2" fill="#2E5A70"/><rect x="74" y="48" width="9" height="10" rx="2" fill="#F2EEE4"/><rect x="168" y="48" width="9" height="10" rx="2" fill="#D9A441"/></svg>`],
   banco:[96, 30, `<svg viewBox="0 0 96 30">${SH(48, 27, 46)}<rect x="8" y="12" width="4" height="14" fill="#3A3F48"/><rect x="84" y="12" width="4" height="14" fill="#3A3F48"/>${rep(3, i => `<rect x="2" y="${2 + i * 4}" width="92" height="3.2" rx="1.5" fill="${i % 2 ? "#9C6B43" : "#B07D52"}"/>`)}</svg>`],
 };
 function fur(name, x, y, g, o = {}){
@@ -752,44 +758,59 @@ world.style.width = W + "px"; world.style.height = H + "px";
 const ED = ROOMS.find(r => r.key === 0);
 let html = `<div class="corr" style="left:0;top:${RH}px;width:${W}px;height:${CORR}px"></div><span class="corrlbl" style="left:80px;top:${CY - 7}px">CORREDOR</span>`;
 ROOMS.forEach((R, i) => {
-  html += `<div class="room" data-room="${i}" style="left:${R.x}px;top:${R.y}px;width:${R.w}px;height:${RH}px"><span class="rug"></span><span class="plaque"><i></i><b></b></span></div>`;
-  [.27, .73].forEach(f => { const wx = R.x + R.w * f - 36; html += `<span class="win" style="left:${wx}px;width:72px"></span><span class="beam" style="left:${wx - 20}px;width:150px"></span>`; });
+  html += `<div class="room" data-room="${i}" data-key="${R.key}" data-db="${R.db ? 1 : 0}" style="left:${R.x}px;top:${R.y}px;width:${R.w}px;height:${RH}px"><span class="rug"></span><span class="plaque"><i></i><b></b></span></div>`;
+  if (R.db) [.27, .73].forEach(f => { const wx = R.x + R.w * f - 36; html += `<span class="win" style="left:${wx}px;width:72px"></span><span class="beam" style="left:${wx - 20}px;width:150px"></span>`; });
   html += glow(R.x + R.w / 2, R.y + RH * .55, Math.min(R.w, RH) * .55, "", "rgba(255,214,150,.42)");
 });
 WALLS.forEach(w => html += `<div class="wall" style="left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px"></div>`);
-/* cada sala segue a mesma grade (canto esquerdo, centro e canto direito da parede; os dois cantos de baixo), com móveis do seu tema */
-const ES = ROOMS.find(r => r.key === 3), PG = ROOMS.find(r => r.key === 2);
-const M = (R, nome, x, y, g, o) => fur(nome, R.x + x, R.y + y, g, o);
+/* cada sala segue a mesma grade: três peças na parede do fundo (esquerda, centro, direita), uma de cada lado no meio e os dois cantos perto da porta.
+   Na fileira de baixo a parede do fundo é a de baixo, então a grade espelha na vertical. */
+const ES = ROOMS.find(r => r.key === 3), PG = ROOMS.find(r => r.key === 2), REU = ROOMS.find(r => r.key === "reuniao");
+const fy = (R, y, nome) => R.db ? y : RH - y - FUR[nome][1];
+const M = (R, nome, x, y, g, o) => fur(nome, R.x + x, R.y + fy(R, y, nome), g, o);
 const parede = {
   esq:(R, nome, g, o = {}, dx = 18) => M(R, nome, dx, 14, g, o),
-  meio:(R, nome, g, o = {}) => M(R, nome, R.w / 2 - FUR[nome][0] / 2, 12, g, {z:4, ...o}),
-  dir:(R, nome, g, o = {}) => M(R, nome, R.w - 18 - FUR[nome][0], 14, g, o)};
+  meio:(R, nome, g, o = {}) => M(R, nome, R.w / 2 - FUR[nome][0] / 2, 12, g, {z:R.db ? 4 : undefined, ...o}),
+  dir:(R, nome, g, o = {}, dx = 18) => M(R, nome, R.w - dx - FUR[nome][0], 14, g, o)};
+const lado = {
+  esq:(R, nome, g, o = {}, dx = 20) => M(R, nome, dx, Math.round(RH * .42), g, o),
+  dir:(R, nome, g, o = {}, dx = 20) => M(R, nome, R.w - dx - FUR[nome][0], Math.round(RH * .42), g, o)};
 const chao = {
   esq:(R, nome, g, o = {}, dx = 16) => M(R, nome, dx, RH - 60 - FUR[nome][1], g, o),
-  dir:(R, nome, g, o = {}) => M(R, nome, R.w - 16 - FUR[nome][0], RH - 60 - FUR[nome][1], g, o)};
-const luz = (R, x, y, r, g, c) => glow(R.x + x, R.y + y, r, g, c);
-/* sua sala: arquivo, letreiro, bebedouro, sofá e o tapete da Matrix Code */
-html += parede.esq(RECEP, "arquivo", "moveis") + parede.meio(RECEP, "neon", "quadros", {lit:true}) + parede.dir(RECEP, "cooler", "moveis")
-  + chao.esq(RECEP, "sofa", "moveis") + chao.dir(RECEP, "tree", "plantas")
+  dir:(R, nome, g, o = {}, dx = 16) => M(R, nome, R.w - dx - FUR[nome][0], RH - 60 - FUR[nome][1], g, o)};
+const luz = (R, x, y, r, g, c) => glow(R.x + x, R.y + (R.db ? y : RH - y), r, g, c);
+/* sua sala: arquivo, letreiro, bebedouro, a sua mesa de diretoria, sofá e o tapete da Matrix Code */
+html += parede.esq(RECEP, "arquivo", "moveis") + parede.esq(RECEP, "estante", "moveis", {}, 70) + parede.meio(RECEP, "neon", "quadros", {lit:true}) + parede.dir(RECEP, "cooler", "moveis") + parede.dir(RECEP, "plant", "plantas", {}, 56)
+  + lado.esq(RECEP, "chefe", "moveis") + lado.dir(RECEP, "tree", "plantas", {}, 30)
+  + chao.esq(RECEP, "sofa", "moveis") + chao.esq(RECEP, "mesinha", "moveis", {}, 134) + chao.dir(RECEP, "plant", "plantas")
   + M(RECEP, "logorug", RECEP.w / 2 - 65, Math.round(RH * .62) - 42, "tapetes", {z:3})
-  + luz(RECEP, RECEP.w / 2, 32, 80, "quadros", "rgba(90,255,140,.45)");
-/* edição: estante de equipamentos, painéis acústicos, ring light e abajur */
-html += parede.esq(ED, "estante", "estudio") + parede.meio(ED, "painel", "estudio") + parede.dir(ED, "ring", "estudio", {lit:true})
-  + chao.esq(ED, "abajur", "moveis", {lit:true}) + chao.dir(ED, "tree", "plantas")
-  + luz(ED, ED.w - 50, 56, 90, "estudio", "rgba(255,246,220,.55)") + luz(ED, 33, RH - 140, 70, "moveis");
-/* programação: servidores, telão com código, quadro da arquitetura e pufes */
-html += parede.esq(PG, "rack", "estudio", {lit:true}) + parede.esq(PG, "rack", "estudio", {lit:true}, 66) + parede.meio(PG, "telao", "estudio", {lit:true}) + parede.dir(PG, "quadro", "quadros")
-  + chao.esq(PG, "pufe", "moveis") + chao.esq(PG, "pufe", "moveis", {}, 76) + chao.dir(PG, "tree", "plantas")
-  + luz(PG, PG.w / 2, 44, 100, "estudio", "rgba(90,255,140,.5)") + luz(PG, 64, 60, 70, "estudio", "rgba(90,255,140,.35)");
+  + luz(RECEP, RECEP.w / 2, 32, 80, "quadros", "rgba(90,255,140,.45)") + luz(RECEP, 100, Math.round(RH * .42) + 30, 90, "moveis");
+/* edição: estante de equipamentos, quadrinhos, painéis acústicos, ring light, câmera no tripé e sofá de revisão */
+html += parede.esq(ED, "estante", "estudio") + parede.esq(ED, "vaca", "quadros", {z:4}, 112) + parede.meio(ED, "painel", "estudio") + parede.dir(ED, "onda", "quadros", {z:4}, 92) + parede.dir(ED, "ring", "estudio", {lit:true})
+  + lado.esq(ED, "abajur", "moveis", {lit:true}) + lado.dir(ED, "ring", "estudio", {lit:true}, 24)
+  + chao.esq(ED, "sofa", "moveis") + chao.dir(ED, "tree", "plantas") + chao.dir(ED, "plant", "plantas", {}, 62)
+  + luz(ED, ED.w - 50, 56, 90, "estudio", "rgba(255,246,220,.55)") + luz(ED, 37, Math.round(RH * .42) + 14, 70, "moveis") + luz(ED, ED.w - 56, Math.round(RH * .42) + 20, 80, "estudio", "rgba(255,246,220,.45)");
+/* programação: três servidores, telão com código, quadro da arquitetura, pufes e plantas */
+html += parede.esq(PG, "rack", "estudio", {lit:true}) + parede.esq(PG, "rack", "estudio", {lit:true}, 66) + parede.esq(PG, "rack", "estudio", {lit:true}, 114) + parede.meio(PG, "telao", "estudio", {lit:true}) + parede.dir(PG, "quadro", "quadros")
+  + lado.esq(PG, "abajur", "moveis", {lit:true}) + lado.dir(PG, "quadro", "quadros", {z:4})
+  + chao.esq(PG, "pufe", "moveis") + chao.esq(PG, "pufe", "moveis", {}, 76) + chao.dir(PG, "tree", "plantas") + chao.dir(PG, "plant", "plantas", {}, 58)
+  + luz(PG, PG.w / 2, 44, 100, "estudio", "rgba(90,255,140,.5)") + luz(PG, 88, 60, 90, "estudio", "rgba(90,255,140,.35)") + luz(PG, 37, Math.round(RH * .42) + 14, 70, "moveis");
 /* estratégia: estante de livros, quadro de metas, plano na parede e canto de conversa */
-html += parede.esq(ES, "estante", "moveis") + parede.meio(ES, "metas", "quadros") + parede.dir(ES, "quadro", "quadros")
-  + chao.esq(ES, "pufe", "moveis") + chao.esq(ES, "mesinha", "moveis", {}, 80) + chao.dir(ES, "tree", "plantas")
-  + luz(ES, ES.w / 2, 50, 100, "quadros", "rgba(255,206,120,.45)");
-/* copa: cozinha, geladeira, mesa no meio e plantas */
+html += parede.esq(ES, "estante", "moveis") + parede.esq(ES, "arquivo", "moveis", {}, 108) + parede.meio(ES, "metas", "quadros") + parede.dir(ES, "quadro", "quadros")
+  + lado.esq(ES, "abajur", "moveis", {lit:true}) + lado.dir(ES, "tree", "plantas", {}, 30)
+  + chao.esq(ES, "pufe", "moveis") + chao.esq(ES, "mesinha", "moveis", {}, 80) + chao.esq(ES, "pufe", "moveis", {}, 140) + chao.dir(ES, "plant", "plantas")
+  + luz(ES, ES.w / 2, 50, 100, "quadros", "rgba(255,206,120,.45)") + luz(ES, 37, Math.round(RH * .42) + 14, 70, "moveis");
+/* reunião: telão de apresentação, quadro, mesa grande no meio e plantas */
+html += parede.esq(REU, "estante", "moveis") + parede.meio(REU, "tv", "quadros", {lit:true}) + parede.dir(REU, "quadro", "quadros")
+  + M(REU, "reuniao", REU.w / 2 - FUR.reuniao[0] / 2, Math.round(RH / 2 - FUR.reuniao[1] / 2), "moveis")
+  + chao.esq(REU, "tree", "plantas") + chao.dir(REU, "tree", "plantas") + lado.esq(REU, "plant", "plantas") + lado.dir(REU, "plant", "plantas")
+  + luz(REU, REU.w / 2, 40, 100, "quadros", "rgba(160,190,255,.4)") + luz(REU, REU.w / 2, RH / 2, 150, "moveis");
+/* copa: cozinha, geladeira, duas mesas e plantas */
 html += parede.esq(COPA, "plant", "plantas") + parede.meio(COPA, "cozinha", "moveis") + parede.dir(COPA, "geladeira", "moveis")
-  + M(COPA, "mesa", COPA.w / 2 - 60, Math.round(RH * .42), "moveis") + chao.esq(COPA, "plant", "plantas") + chao.dir(COPA, "plant", "plantas")
+  + M(COPA, "mesa", COPA.w * .3 - 60, Math.round(RH * .38), "moveis") + M(COPA, "mesa", COPA.w * .7 - 60, Math.round(RH * .38), "moveis")
+  + chao.esq(COPA, "plant", "plantas") + chao.dir(COPA, "plant", "plantas") + chao.esq(COPA, "cooler", "moveis", {}, 60)
   + luz(COPA, COPA.w / 2, 30, 70, "moveis", "rgba(127,227,240,.35)");
-html += rep(10, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
+html += rep(Math.ceil(W / 200), i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
 AG.forEach(a => {
   html += `<span class="chair" style="left:${a.hx - 16}px;top:${a.hy - 32}px;z-index:${Math.round(a.hy) - 2}"></span>`;
   html += `<span class="desk on" id="desk${a.k}" style="left:${a.deskX - 75}px;top:${a.deskY}px;z-index:${Math.round(a.deskY + 34)};--c:${a.c}">${a.s === "papers" ? `<span class="mon"><span class="screen s-text">${SCREENS.text}</span></span><span class="top"></span>${[[66,26],[84,34],[102,18]].map(([l, h]) => `<span class="pile" style="left:${l}px;--h:${h}px"></span>`).join("")}${[[12,6,-9],[34,10,7],[118,4,-4],[128,12,11],[52,14,-3]].map(([l, tp, r]) => `<span class="sheet" style="left:${l}px;top:${tp}px;transform:rotate(${r}deg)"></span>`).join("")}<span class="pens"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>` : `<span class="mon"><span class="screen s-${a.s}">${SCREENS[a.s]}</span></span><span class="mon mon2"><span class="screen ${a.s === "matrix" ? "s-term" : "s-tl"}">${a.s === "matrix" ? "<i></i><i></i><i></i><i></i>" : "<i></i><i></i><i></i><b></b>"}</span></span><span class="top"></span><span class="kbd"></span><span class="mug"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>`}`;
@@ -812,7 +833,7 @@ const oldMe = store.get("torre-eu-skin", 0);
 function cfgDefault(){
   return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:5,
     light:"dia", names:false, fast:false, roam:false, title:"Matrix Code", sofa:"#166534",
-    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"carpete", c:"#D9A441"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
+    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"carpete", c:"#D9A441"}, reuniao:{name:"Reunião", floor:"concreto", c:"#8E7CF0"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
     deco:{plantas:true, tapetes:true, quadros:true, estudio:true, moveis:true}};
 }
 const CFG = (() => { const d = cfgDefault(), s = store.get("torre-cfg", {}) || {};
@@ -853,6 +874,26 @@ AG.forEach(a => {
 function place(o){ o.el.style.transform = `translate(${o.x - 22}px,${o.y - 66}px)`; o.el.style.zIndex = Math.round(o.y); }
 function reskin(a){ a.el.querySelector(".flipper").innerHTML = spriteSVG(a.skin, a.c); }
 
+/* ---------- gente na sala de reunião ---------- */
+/* figurantes: andam pela sala, sentam à mesa e comentam; não atendem pedidos */
+const MESA = {x:REU.x + REU.w / 2, y:REU.y + Math.round(RH / 2 - FUR.reuniao[1] / 2)};
+const LUGARES = [0, 1, 2, 3].flatMap(i => [[MESA.x - 125 + 51 + i * 50, MESA.y + 26], [MESA.x - 125 + 51 + i * 50, MESA.y + FUR.reuniao[1] + 6]]);
+const FALAS_REU = ["Próximo slide!","Bora fechar isso","Faz sentido","Anotado ✍️","E o prazo?","Boa!","Concordo","Vamos testar","Quem fica com essa?","Fechado 👍"];
+const NPC = ["Ana","Bruno","Carla","Diego","Elisa"].map((n, i) => {
+  const [x, y] = pontoLivre(), o = {n, x, y, path:[], gen:0, ate:Date.now() + i * 900, lugar:null,
+    skin:{...skinFor(900 + i * 53, i % 2 ? "m" : "f"), shirt:SHIRTS[(i * 5 + 3) % SHIRTS.length]}};
+  const el = document.createElement("span"); el.className = "sp npc";
+  el.innerHTML = `<span class="flipper">${spriteSVG(o.skin)}</span><span class="nm">${n}</span>`;
+  world.appendChild(el); o.el = el; place(o); return o;
+});
+function pontoLivre(){
+  for (let t = 0; t < 12; t++){
+    const x = REU.x + 50 + Math.random() * (REU.w - 100), y = REU.y + 70 + Math.random() * (RH - 140);
+    if (Math.abs(x - MESA.x) > 150 || y < MESA.y - 30 || y > MESA.y + FUR.reuniao[1] + 30) return [x, y];
+  }
+  return [REU.x + 60, REU.y + RH - 70];
+}
+
 /* ---------- rotas ---------- */
 function roomAt(x, y){ return ROOMS.findIndex(R => x > R.x + 2 && x < R.x + R.w - 2 && y > R.y + 2 && y < R.y + RH - 2); }
 function route(fx, fy, tx, ty){
@@ -872,7 +913,7 @@ function check(o, g){ if (o.gen !== g) throw ABORT; }
 function goPath(o, pts, g){ return new Promise((res, rej) => { o.path = pts.slice(); o.onArrive = res; o.onAbort = rej; o.pathGen = g; o.el.classList.remove("sit"); if (o.desk) o.desk.classList.remove("on"); }); }
 async function walkTo(o, x, y, g){ check(o, g); await goPath(o, route(o.x, o.y, x, y), g); check(o, g); }
 function stepAll(dt){
-  for (const o of [...AG, P]){
+  for (const o of [...AG, ...NPC, P]){
     if (!o.path || !o.path.length){ if (o !== P || !P.keyMove) o.el.classList.remove("walk"); continue; }
     if (o.gen !== o.pathGen){ o.path = []; o.onAbort?.(ABORT); continue; }
     const [tx, ty] = o.path[0], dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy), step = (o === P ? 150 : SPEED) * dt * (CFG.fast ? 1.7 : 1);
@@ -910,6 +951,20 @@ function run(a, name, arg, manual){
   R[name](a, g, arg).catch(e => { if (e !== ABORT) console.error(e); });
 }
 let paused = false;
+setInterval(() => {
+  if (paused || document.hidden) return;
+  const livres = NPC.filter(o => !o.path.length && Date.now() > o.ate);
+  if (!livres.length) return;
+  const o = pick(livres), ocup = new Set(NPC.map(x => x.lugar).filter(Boolean)), vagos = LUGARES.filter(l => !ocup.has(l));
+  o.gen++; const g = o.gen; o.el.classList.remove("sit"); o.lugar = null;
+  const senta = vagos.length && Math.random() < .6, alvo = senta ? pick(vagos) : pontoLivre();
+  if (senta) o.lugar = alvo;
+  walkTo(o, alvo[0], alvo[1], g).then(() => {
+    if (senta){ o.el.classList.add("sit"); o.el.classList.toggle("flip", alvo[0] > MESA.x); }
+    if (Math.random() < .55) bubble(o, pick(FALAS_REU));
+    o.ate = Date.now() + (senta ? 6000 : 2000) + Math.random() * 6000;
+  }).catch(() => {});
+}, 1300);
 setInterval(() => {
   if (paused || document.hidden || !CFG.roam) return;
   const idle = AG.filter(a => a.el.classList.contains("sit") && a.manual < Date.now());
