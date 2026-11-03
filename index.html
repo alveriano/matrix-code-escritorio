@@ -131,6 +131,12 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .beam{position:absolute;top:7px;height:230px;pointer-events:none;z-index:1;clip-path:polygon(0 0,58% 0,100% 100%,42% 100%);background:linear-gradient(rgba(255,248,220,.42),transparent)}
 .fur{position:absolute;pointer-events:none;line-height:0;filter:var(--dkf)}
 .fur svg{width:100%;height:100%;display:block;overflow:visible}
+.fur.int{pointer-events:auto;cursor:pointer;transform-origin:50% 100%;transition:filter .15s}
+.fur.int:hover,.fur.perto{filter:var(--dkf) drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 1px var(--accent))}
+.fur.off{filter:var(--dkf) brightness(.5) saturate(.5)}
+.fur.off:hover,.fur.off.perto{filter:var(--dkf) brightness(.5) saturate(.5) drop-shadow(0 0 3px var(--accent))}
+.fur.mexe{animation:mexe .45s ease-in-out 2}
+@keyframes mexe{25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
 .glow{position:absolute;border-radius:50%;pointer-events:none;z-index:2;opacity:0;transition:opacity .8s;background:radial-gradient(closest-side,var(--g,rgba(255,214,140,.6)),transparent);mix-blend-mode:screen}
 .world.no-plantas .fur[data-g="plantas"],.world.no-tapetes .fur[data-g="tapetes"],.world.no-quadros .fur[data-g="quadros"],.world.no-estudio .fur[data-g="estudio"],.world.no-moveis .fur[data-g="moveis"]{display:none}
 .world.no-estudio .glow[data-g="estudio"],.world.no-quadros .glow[data-g="quadros"],.world.no-moveis .glow[data-g="moveis"]{display:none}
@@ -746,9 +752,36 @@ const FUR = {
   reuniao:[250, 112, `<svg viewBox="0 0 250 112">${SH(125, 108, 120)}${rep(4, i => `<rect x="${38 + i * 50}" y="0" width="26" height="22" rx="8" fill="#2B2F38"/><rect x="${38 + i * 50}" y="90" width="26" height="22" rx="8" fill="#2B2F38"/>`)}<rect x="0" y="44" width="16" height="26" rx="8" fill="#2B2F38"/><rect x="234" y="44" width="16" height="26" rx="8" fill="#2B2F38"/><rect x="14" y="16" width="222" height="80" rx="38" fill="#6E4A2F"/><rect x="14" y="14" width="222" height="76" rx="36" fill="#9C6B43"/><rect x="30" y="24" width="190" height="56" rx="26" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="2"/>${rep(4, i => `<rect x="${44 + i * 50}" y="22" width="16" height="11" rx="1.5" fill="#F2EEE4"/><rect x="${44 + i * 50}" y="72" width="16" height="11" rx="1.5" fill="#F2EEE4"/>`)}<rect x="110" y="44" width="30" height="16" rx="3" fill="#1A1F25"/><rect x="112" y="46" width="26" height="12" rx="2" fill="#2E5A70"/><rect x="74" y="48" width="9" height="10" rx="2" fill="#F2EEE4"/><rect x="168" y="48" width="9" height="10" rx="2" fill="#D9A441"/></svg>`],
   banco:[96, 30, `<svg viewBox="0 0 96 30">${SH(48, 27, 46)}<rect x="8" y="12" width="4" height="14" fill="#3A3F48"/><rect x="84" y="12" width="4" height="14" fill="#3A3F48"/>${rep(3, i => `<rect x="2" y="${2 + i * 4}" width="92" height="3.2" rx="1.5" fill="${i % 2 ? "#9C6B43" : "#B07D52"}"/>`)}</svg>`],
 };
+/* móveis que dá para usar: o rótulo aparece quando você chega perto (Enter) ou ao clicar; "senta" diz onde o boneco senta */
+const USO = {
+  sofa:{t:"Sentar no sofá", senta:it => [it.x + it.w / 2, it.y + it.h - 14]},
+  pufe:{t:"Sentar no pufe", senta:it => [it.x + it.w / 2, it.y + it.h - 10]},
+  chefe:{t:"Sentar na sua mesa", senta:it => [it.x + it.w / 2, it.y + 40]},
+  mesa:{t:"Sentar à mesa", senta:it => [it.x + (P.x < it.x + it.w / 2 ? 22 : 98), it.y + 58]},
+  reuniao:{t:"Sentar na reunião", senta:() => lugarLivre()},
+  cooler:{t:"Beber água", fala:["💧 Água geladinha","💧 Hidratado!"]},
+  geladeira:{t:"Abrir a geladeira", fala:["🥤 Peguei um suco","🧀 Queijo da fazenda!","🍎 Uma maçã","🥛 Leite fresquinho"]},
+  cozinha:{t:"Passar um café", fala:["☕ Café passado na hora","☕ Quem quer café?"], todos:true},
+  neon:{t:"Ligar ou desligar o letreiro", luz:true},
+  abajur:{t:"Ligar ou desligar o abajur", luz:true},
+  ring:{t:"Ligar ou desligar a luz", luz:true},
+  metas:{t:"Ver os números do Instagram", abre:"ig"},
+  tv:{t:"Ver a apresentação", abre:"ig"},
+  telao:{t:"Ver o código", fala:["⚡ Build passou ✅","🐛 Achei um bug…","🚀 Deploy no ar"]},
+  quadro:{t:"Ler o quadro", fala:["📌 Semana: 3 cortes e 2 carrosséis","💡 Ideia: série Mito ou Verdade","📌 Gancho forte nos 3 primeiros segundos","🗺️ Arquitetura do site ✔️"]},
+  estante:{t:"Pegar um livro", fala:["📖 Manejo de bezerras","📖 Nutrição de vacas leiteiras","📖 Storytelling para redes","📖 Python para iniciantes"]},
+  arquivo:{t:"Abrir o arquivo", fala:["🗂️ Tudo organizado","🗂️ Contratos em dia"]},
+  rack:{t:"Ver os servidores", fala:["🟢 Todos no ar","🟢 Backup feito hoje"]},
+  plant:{t:"Regar a planta", fala:["💧 Regando…","🌱 Crescendo bem"], mexe:true},
+  tree:{t:"Regar a planta", fala:["💧 Regando…","🌳 Tá linda"], mexe:true},
+  vaca:{t:"Olhar o quadro", fala:["🐄 Muuu!"], mexe:true},
+  onda:{t:"Olhar o quadro", fala:["🎙️ No ar!"]},
+  painel:{t:"Testar o som", fala:["🔇 Silêncio, gravando!","🎚️ Som perfeito"]},
+  mesinha:{t:"Folhear a revista", fala:["📰 Revista do leite","📰 Notícias do campo"]}};
+const FURS = [];
 function fur(name, x, y, g, o = {}){
-  const [w, h, svg] = FUR[name];
-  return `<span class="fur${o.lit ? " lit" : ""}" data-g="${g}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${o.z ?? Math.round(y + h - 6)}">${svg}</span>`;
+  const [w, h, svg] = FUR[name], fi = USO[name] ? FURS.push({name, x, y, w, h}) - 1 : -1;
+  return `<span class="fur${o.lit ? " lit" : ""}${fi >= 0 ? " int" : ""}" data-g="${g}"${fi >= 0 ? ` data-fi="${fi}"` : ""} style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;z-index:${o.z ?? Math.round(y + h - 6)}">${svg}</span>`;
 }
 const glow = (x, y, r, g, c) => `<span class="glow" data-g="${g || ""}" style="left:${x - r}px;top:${y - r}px;width:${r * 2}px;height:${r * 2}px${c ? `;--g:${c}` : ""}"></span>`;
 
@@ -955,7 +988,7 @@ setInterval(() => {
   if (paused || document.hidden) return;
   const livres = NPC.filter(o => !o.path.length && Date.now() > o.ate);
   if (!livres.length) return;
-  const o = pick(livres), ocup = new Set(NPC.map(x => x.lugar).filter(Boolean)), vagos = LUGARES.filter(l => !ocup.has(l));
+  const o = pick(livres), ocup = new Set([...NPC.map(x => x.lugar), P.lugar].filter(Boolean)), vagos = LUGARES.filter(l => !ocup.has(l));
   o.gen++; const g = o.gen; o.el.classList.remove("sit"); o.lugar = null;
   const senta = vagos.length && Math.random() < .6, alvo = senta ? pick(vagos) : pontoLivre();
   if (senta) o.lugar = alvo;
@@ -1291,7 +1324,7 @@ addEventListener("keydown", e => {
   if (typing()) return;
   const k = KMAP[e.key.toLowerCase()];
   if (k){ keys.add(k); P.gen++; P.path = []; e.preventDefault(); return; }
-  if ((e.key === "Enter" || e.key === " " || e.key.toLowerCase() === "e") && near && !document.activeElement?.closest?.("button")){ e.preventDefault(); talk(near); }
+  if ((e.key === "Enter" || e.key === " " || e.key.toLowerCase() === "e") && (near || pertoF >= 0) && !document.activeElement?.closest?.("button")){ e.preventDefault(); if (near) talk(near); else usar(pertoF, true); }
 });
 addEventListener("keyup", e => { const k = KMAP[e.key.toLowerCase()]; if (k) keys.delete(k); });
 addEventListener("blur", () => keys.clear());
@@ -1304,6 +1337,7 @@ function moveMe(dt){
   const dx = (keys.has("R") ? 1 : 0) - (keys.has("L") ? 1 : 0), dy = (keys.has("D") ? 1 : 0) - (keys.has("U") ? 1 : 0);
   P.keyMove = !!(dx || dy);
   if (!P.keyMove) return;
+  if (P.el.classList.contains("sit")){ P.el.classList.remove("sit"); P.lugar = null; }
   const n = Math.hypot(dx, dy), v = 170 * dt * (CFG.fast ? 1.7 : 1);
   const nx = P.x + dx / n * v, ny = P.y + dy / n * v;
   if (!blocked(nx, P.y)) P.x = nx;
@@ -1320,11 +1354,49 @@ function prompt(t){ const p = P.el.querySelector(".prompt"); if (!t){ p.hidden =
 function updateNear(){
   let best = null, bd = 64;
   for (const a of AG){ const d = Math.hypot(a.x - P.x, a.y - P.y); if (d < bd && roomAt(a.x, a.y) === roomAt(P.x, P.y)){ bd = d; best = a; } }
-  if (best !== near){ near?.el.classList.remove("near"); near = best; near?.el.classList.add("near"); $("#padTalk").disabled = !near; }
-  prompt(near && talkingTo !== near ? `Enter: falar com ${near.n}` : "");
+  if (best !== near){ near?.el.classList.remove("near"); near = best; near?.el.classList.add("near"); }
+  let fb = -1, fd = 34;
+  if (!near && !P.el.classList.contains("sit")) FURS.forEach((it, i) => { const d = distMovel(it); if (d < fd){ fd = d; fb = i; } });
+  if (fb !== pertoF){ if (pertoF >= 0) furEl(pertoF)?.classList.remove("perto"); pertoF = fb; if (fb >= 0) furEl(fb)?.classList.add("perto"); }
+  $("#padTalk").disabled = !near && pertoF < 0;
+  prompt(near && talkingTo !== near ? `Enter: falar com ${near.n}` : pertoF >= 0 ? `Enter: ${USO[FURS[pertoF].name].t}` : "");
 }
+/* ---------- usar os móveis ---------- */
+let pertoF = -1;
+const furEl = i => world.querySelector(`[data-fi="${i}"]`);
+function lugarLivre(){
+  const ocup = new Set(NPC.map(x => x.lugar).filter(Boolean)), vagos = LUGARES.filter(l => !ocup.has(l));
+  return (vagos.length ? vagos : LUGARES).reduce((b, l) => Math.hypot(l[0] - P.x, l[1] - P.y) < Math.hypot(b[0] - P.x, b[1] - P.y) ? l : b);
+}
+function pontoDoMovel(it){
+  const cx = it.x + it.w / 2, r = roomAt(cx, it.y + it.h / 2), R = ROOMS[r];
+  if (!R) return [cx, it.y + it.h + 14];
+  const embaixo = it.y + it.h + 14, emcima = it.y - 6;
+  const y = embaixo < R.y + RH - 16 && !blocked(cx, embaixo) ? embaixo : Math.max(R.y + 24, emcima);
+  return [Math.max(R.x + 20, Math.min(R.x + R.w - 20, cx)), y];
+}
+function distMovel(it){
+  const dx = Math.max(it.x - P.x, 0, P.x - (it.x + it.w)), dy = Math.max(it.y - P.y, 0, P.y - (it.y + it.h + 10));
+  return roomAt(P.x, P.y) === roomAt(it.x + it.w / 2, it.y + it.h / 2) ? Math.hypot(dx, dy) : Infinity;
+}
+async function usar(i, jaPerto){
+  const it = FURS[i], u = USO[it.name], el = furEl(i); if (!it || !u) return;
+  if (!jaPerto && distMovel(it) > 30){ const [x, y] = pontoDoMovel(it); try { await goTo(x, y); } catch (e){ if (e === ABORT) return; throw e; } }
+  P.lugar = null;
+  if (u.senta){
+    const pos = u.senta(it), [x, y] = pos; P.x = x; P.y = y; if (it.name === "reuniao") P.lugar = pos;
+    P.el.classList.add("sit"); P.el.classList.toggle("flip", it.name === "reuniao" && x > MESA.x); place(P);
+    bubble(P, pick(["Ahh, que conforto","Sentei 🙂","Pausa rápida"]), 1800); return;
+  }
+  if (u.luz){ el?.classList.toggle("off"); bubble(P, el?.classList.contains("off") ? "💡 Desliguei" : "💡 Liguei", 1500); return; }
+  if (u.abre === "ig" && typeof igAbrir === "function"){ bubble(P, "📊 Vamos ver os números", 1500); igAbrir(); return; }
+  if (u.mexe && el){ el.classList.remove("mexe"); void el.offsetWidth; el.classList.add("mexe"); }
+  bubble(P, pick(u.fala));
+  if (u.todos){ const perto = AG.filter(a => roomAt(a.x, a.y) === roomAt(P.x, P.y) || Math.random() < .3); perto.slice(0, 2).forEach((a, k) => setTimeout(() => bubble(a, pick(["Eu quero! ☕","Opa, café!","Me vê um também"])), 700 + k * 600)); }
+}
+
 async function goTo(x, y){
-  P.gen++; const g = P.gen;
+  P.gen++; const g = P.gen; P.lugar = null;
   await goPath(P, route(P.x, P.y, x, y), g);
 }
 async function goTalk(a){
@@ -1341,7 +1413,7 @@ function talk(a){
 }
 document.querySelectorAll("[data-pad]").forEach(b => {
   const k = b.dataset.pad;
-  if (k === "T") b.addEventListener("click", () => near && talk(near));
+  if (k === "T") b.addEventListener("click", () => near ? talk(near) : pertoF >= 0 && usar(pertoF, true));
   else {
     b.addEventListener("pointerdown", e => { e.preventDefault(); keys.add(k); P.gen++; P.path = []; });
     ["pointerup","pointerleave","pointercancel"].forEach(ev => b.addEventListener(ev, () => keys.delete(k)));
@@ -1363,6 +1435,7 @@ fit(); addEventListener("resize", fit);
 
 /* ---------- cliques ---------- */
 document.addEventListener("click", async e => {
+  const fe = e.target.closest(".fur.int"); if (fe){ usar(+fe.dataset.fi).catch(() => {}); return; }
   const sp = e.target.closest(".sp:not(.me):not(.other)"); if (sp){ goTalk(AG[+sp.dataset.k]).catch(() => {}); return; }
   const cz = e.target.closest("[data-cz],[data-czg],[data-czr],[data-czd],[data-cztab],[data-czroom],[data-czact],[data-czopen]"); if (cz){ czClick(cz); return; }
   const dp = e.target.closest("[data-dept]");
@@ -1440,7 +1513,7 @@ let room = null, userCap = null, lastSent = "";
 const PEERS = new Map(), names = {};
 function sendPresence(){
   if (!room) return;
-  const p = {x:Math.round(P.x), y:Math.round(P.y), f:P.el.classList.contains("flip"), w:P.el.classList.contains("walk"), skin:cleanSkin(CFG.me), name:((CFG.me.name || "").trim() === "Você" ? "" : (CFG.me.name || "").trim().slice(0, 24))};
+  const p = {x:Math.round(P.x), y:Math.round(P.y), f:P.el.classList.contains("flip"), w:P.el.classList.contains("walk"), s:P.el.classList.contains("sit"), skin:cleanSkin(CFG.me), name:((CFG.me.name || "").trim() === "Você" ? "" : (CFG.me.name || "").trim().slice(0, 24))};
   const s = JSON.stringify(p); if (s === lastSent) return; lastSent = s; room.presence(p).catch(() => {});
 }
 function updatePeers(list){
@@ -1454,7 +1527,7 @@ function updatePeers(list){
       const el = document.createElement("div"); el.className = "sp other"; el.innerHTML = `<span class="flipper"></span><span class="nm"></span>`;
       world.appendChild(el); o = {el, x:pr.x, y:pr.y, skinKey:""}; PEERS.set(p.peer, o);
     }
-    o.tx = Math.max(0, Math.min(W, pr.x)); o.ty = Math.max(0, Math.min(H, pr.y)); o.w = !!pr.w;
+    o.tx = Math.max(0, Math.min(W, pr.x)); o.ty = Math.max(0, Math.min(H, pr.y)); o.w = !!pr.w; o.el.classList.toggle("sit", !!pr.s);
     o.el.classList.toggle("flip", !!pr.f);
     const sk = cleanSkin(pr.skin), key = JSON.stringify(sk);
     if (key !== o.skinKey){ o.skinKey = key; o.el.querySelector(".flipper").innerHTML = spriteSVG(sk, sk.shirt); }
