@@ -48,7 +48,7 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .mapwrap{max-width:1560px;margin:0 auto;position:relative}
 .map{overflow:auto;border-radius:10px;border:6px solid var(--wall);background:var(--wall);max-height:calc(100vh - 120px);-webkit-overflow-scrolling:touch}
 .sizer{position:relative}
-.world{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--corr)}
+.world{position:absolute;left:0;top:0;transform-origin:0 0;background:var(--corr);overflow:clip}
 .zoom{position:absolute;right:14px;top:14px;display:flex;flex-direction:column;gap:4px;z-index:20}
 .zoom button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:600}
 .hint{max-width:1560px;margin:8px auto 0;font-size:12.5px;color:var(--muted)}
@@ -348,44 +348,38 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 @media (pointer:coarse){.padctl{display:grid}.card{bottom:calc(120px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:560px){.card{left:max(16px,env(safe-area-inset-left,0px));width:auto}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:0s!important}}
-/* visual: topo, salas, moldura do mapa e área de conversa */
-body{background:radial-gradient(1100px 420px at 10% -12%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 70%) no-repeat,var(--bg)}
-.head{align-items:center;gap:16px 28px;margin-bottom:18px}
-.brand{display:grid;gap:8px;min-width:0;flex:1 1 440px}
-.kicker{margin:0;display:inline-flex;align-items:center;gap:9px;font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
-.kicker::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent);animation:pulse 1.8s infinite}
-h1{font-size:clamp(40px,6vw,64px);letter-spacing:.01em}
-.lead{margin:0;font-size:14.5px;line-height:1.55;max-width:70ch}
-.controls{gap:4px;padding:5px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 10px 30px -18px rgba(0,0,0,.6)}
-.controls .pill{border-color:transparent;background:transparent;border-radius:11px;padding:8px 12px;transition:background .15s,border-color .15s}
+/* visual: barra fina no topo, mapa na largura toda, conversa logo abaixo */
+body{padding-block:12px 90px}
+.head,.legend,.mapwrap,.hint{max-width:none}
+.head{margin:0 0 12px;padding:6px 6px 6px 18px;flex-wrap:nowrap;align-items:center;gap:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.brand{flex:0 0 auto}
+.lead,.legend,.hint{display:none}
+h1{font-size:30px;line-height:1;letter-spacing:.02em}
+.controls{gap:2px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;min-width:0}
+.controls::-webkit-scrollbar{display:none}
+.controls>*{flex:0 0 auto}
+.controls .pill{border:1px solid transparent;background:transparent;border-radius:11px;padding:8px 12px;transition:background .15s,border-color .15s}
 .controls .pill:hover{background:var(--bg);border-color:var(--line)}
 .controls .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.controls .pill.online{color:var(--accent);font-weight:600;background:color-mix(in srgb,var(--accent) 10%,transparent)}
-.legend{align-items:center;gap:6px;margin-bottom:12px}
-.legend::before{content:"Salas";font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:6px}
-.legend button{gap:8px;padding:6px 10px 6px 11px;border-radius:10px;font-size:13px;font-weight:500;transition:border-color .15s,background .15s}
-.legend button:hover{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--panel))}
-.legend i{width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
-.legend small{font-family:var(--f-mono);font-size:11px;line-height:1;padding:3px 6px;border-radius:999px;background:var(--bg)}
-.map{border-width:8px;border-radius:18px;box-shadow:0 0 0 1px var(--line),0 30px 70px -30px rgba(0,0,0,.7)}
+.controls .pill.online{color:var(--accent);font-weight:600}
+.map{border-width:8px;border-radius:16px;box-shadow:0 0 0 1px var(--line);max-height:calc(100vh - 170px)}
 .zoom{right:20px;top:20px;gap:6px}
 .zoom button{width:36px;height:36px;border-radius:10px;font-size:16px;box-shadow:0 6px 16px rgba(0,0,0,.28)}
 .zoom button:hover{border-color:var(--accent)}
-.dock{max-width:1560px;margin:16px auto 0;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--panel);display:grid;gap:10px;box-shadow:0 14px 40px -26px rgba(0,0,0,.6)}
+.dock{margin:12px 0 0;padding:8px;border:1px solid var(--line);border-radius:16px;background:var(--panel);display:grid;gap:8px}
 .dock .chatbar{margin:0;max-width:none}
-.dock .chatbar input{padding:11px 16px;border-radius:12px;background:var(--bg)}
+.dock .chatbar input{padding:11px 16px;border-radius:11px;background:var(--bg)}
 .dock .chatbar input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
-.dock .btn{border-radius:12px;padding:10px 18px;font-weight:600;white-space:nowrap}
+.dock .btn{border-radius:11px;padding:10px 18px;font-weight:600;white-space:nowrap}
 .dock .btn.primary{min-width:100px}
-.dock .vozmsg{margin:-2px 0 0;padding:0 4px;min-height:0}
+.dock .vozmsg{margin:0;padding:0 6px 2px;min-height:0}
 .dock .vozmsg:empty{display:none}
-.dock .hint{margin:0;padding:10px 4px 0;border-top:1px solid var(--line)}
-@media (max-width:640px){.lead{font-size:13.5px}.controls,.legend{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.controls{width:100%}.controls::-webkit-scrollbar,.legend::-webkit-scrollbar{display:none}.controls>*,.legend>*{flex:0 0 auto}.legend{margin-inline:-16px;padding-inline:16px}.vozbar{flex-wrap:wrap}.vozbar input{flex:1 1 100%;order:-1}.vozbar .btn{flex:1}.dock .btn.primary{min-width:0}}
+.dock:not(:has(> form:not([hidden]))){display:none}
+@media (max-width:640px){.head{padding:5px 5px 5px 12px;gap:10px}h1{font-size:22px}.vozbar{flex-wrap:wrap}.vozbar input{flex:1 1 100%;order:-1}.vozbar .btn{flex:1}.dock .btn.primary{min-width:0}}
 </style>
 
 <header class="head">
   <div class="brand">
-    <p class="kicker">Escritório virtual · ao vivo</p>
     <h1>Matrix Code</h1>
     <p class="lead">Bem-vindo ao escritório da Matrix Code. Monte seu boneco em 🎨 Personalizar, ande com as setas ou clicando no chão e converse com quem estiver aqui, ao vivo. O Patrick Jane edita os vídeos, o Xanax programa e a Helena cuida da papelada.</p>
   </div>
@@ -606,7 +600,7 @@ const DEPTS = [
   {t:"Edição de Vídeo", c:"#D9A13B", a:[
     ["Patrick Jane","video","Editor de vídeo do CowTalk. Pega o vídeo em bruto e entrega o corte pronto no Modelo 1, 3 ou 4.","Use o agente Patrick Jane para editar corte 6.mp4 no modelo 4",["Renderizando um corte…","Conferindo a folha de quadros","Loudness em -16 LUFS"]],
   ]},
-  {t:"Sua sala", c:"#22C55E", room:"recep", at:[330, 112], a:[
+  {t:"Sua sala", c:"#22C55E", room:"recep", a:[
     ["Helena","papers","Sua secretária. Anota tudo o que você pede no prédio e o que você contar para ela, e todo dia às 20:00 entrega o relatório do dia.","",["Organizando a papelada","Anotando seus pedidos","Arquivando os relatórios","Conferindo a agenda"]],
   ]},
   {t:"Programação", c:"#4ADE80", a:[
@@ -682,12 +676,12 @@ const AG_SKIN = {"Helena":{g:"f", skin:"#F1C9A5", hair:"#5A3A22", style:"longo",
 
 /* ---------- planta ---------- */
 /* fileira de cima: recepção, edição, design, copa · corredor · fileira de baixo: roteiro, estratégia, anúncios, métricas */
-const W = 1980, RH = 380, CORR = 110, H = RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
-const TOP = [{k:"recep", w:480}, {k:0, cols:1, w:400}, {k:2, cols:1, w:400}, {k:3, cols:1, w:400}, {k:"copa", w:0}];
+/* a altura das salas acompanha o formato da janela, para o andar ocupar a tela toda */
+const W = 1980, RH = Math.round(Math.min(700, Math.max(380, W * (innerHeight - 170) / Math.max(320, innerWidth - 50) - 110))), CORR = 110, H = RH + CORR, DOOR = 76, WT = 7, CY = RH + CORR / 2, CELL = 124;
+const TOP = [{k:"recep", w:0}, {k:0, cols:1, w:0}, {k:2, cols:1, w:0}, {k:3, cols:1, w:0}, {k:"copa", w:0}];
 const ROOMS = [];
 function rowRooms(list, y, db){
-  list.forEach(s => { if (s.cols && !s.w) s.w = s.cols * CELL + 56; });
-  const fixed = list.reduce((n, s) => n + (s.w || 0), 0), free = list.filter(s => !s.w);
+    const fixed = list.reduce((n, s) => n + (s.w || 0), 0), free = list.filter(s => !s.w);
   free.forEach(s => s.w = (W - fixed) / free.length);
   if (!free.length){ const extra = (W - fixed) / list.length; list.forEach(s => s.w += extra); }
   let x = 0;
@@ -699,7 +693,7 @@ const AG = [];
 DEPTS.forEach((d, di) => {
   const room = ROOMS.find(r => r.key === (d.room ?? di)); room.dept = di;
   const cols = room.cols || 1, x0 = d.at ? room.x + d.at[0] - CELL / 2 : room.x + (room.w - cols * CELL) / 2;
-  const rowsY = room.db ? [room.y + 112, room.y + 246] : [room.y + 150, room.y + 284];
+  const rowsY = room.db ? [room.y + Math.round(RH * .26), room.y + Math.round(RH * .26) + 134] : [room.y + 150, room.y + 284];
   d.a.forEach((a, i) => {
     const col = i % cols, row = Math.floor(i / cols), cx = x0 + col * CELL + CELL / 2, deskY = d.at ? room.y + d.at[1] : rowsY[row], seatY = deskY - 4;
     AG.push({k:AG.length, di, n:a[0], s:a[1], v:a[2], cmd:a[3], says:a[4], c:d.c, room, deskX:cx - 6, deskY, hx:cx + 44, hy:seatY,
@@ -763,35 +757,15 @@ ROOMS.forEach((R, i) => {
   html += glow(R.x + R.w / 2, R.y + RH * .55, Math.min(R.w, RH) * .55, "", "rgba(255,214,150,.42)");
 });
 WALLS.forEach(w => html += `<div class="wall" style="left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px"></div>`);
-/* sua sala */
-html += fur("logorug", RECEP.x + 170, RECEP.y + 186, "tapetes", {z:3}) + fur("chefe", RECEP.x + 26, RECEP.y + 30, "moveis") + fur("neon", RECEP.x + 186, RECEP.y + 14, "quadros", {lit:true, z:4})
-  + fur("arquivo", RECEP.x + 418, RECEP.y + 26, "moveis") + fur("sofa", RECEP.x + 14, RECEP.y + 268, "moveis") + fur("mesinha", RECEP.x + 136, RECEP.y + 292, "moveis")
-  + fur("tree", RECEP.x + 432, RECEP.y + 270, "plantas") + fur("cooler", RECEP.x + 440, RECEP.y + 180, "moveis")
-  + glow(RECEP.x + 248, RECEP.y + 40, 70, "quadros", "rgba(90,255,140,.5)") + glow(RECEP.x + 120, RECEP.y + 70, 80, "moveis");
-/* edição */
-html += fur("painel", ED.x + ED.w / 2 - 85, ED.y + 12, "estudio", {z:4}) + fur("estante", ED.x + 18, ED.y + 14, "estudio") + fur("vaca", ED.x + 112, ED.y + 16, "quadros", {z:4})
-  + fur("ring", ED.x + ED.w - 82, ED.y + 30, "estudio", {lit:true}) + fur("abajur", ED.x + 22, ED.y + 196, "moveis", {lit:true}) + fur("tree", ED.x + ED.w - 50, ED.y + 252, "plantas")
-  + fur("onda", ED.x + ED.w - 140, ED.y + 16, "quadros", {z:4})
-  + glow(ED.x + ED.w - 50, ED.y + 56, 90, "estudio", "rgba(255,246,220,.6)") + glow(ED.x + 39, ED.y + 210, 80, "moveis");
-/* programação */
-const PG = ROOMS.find(r => r.key === 2);
-html += fur("telao", PG.x + PG.w / 2 - 75, PG.y + 10, "estudio", {lit:true, z:4}) + fur("rack", PG.x + 18, PG.y + 14, "estudio", {lit:true}) + fur("rack", PG.x + 64, PG.y + 14, "estudio", {lit:true})
-  + fur("quadro", PG.x + PG.w - 116, PG.y + 14, "quadros", {z:4}) + fur("pufe", PG.x + 26, PG.y + 250, "moveis") + fur("pufe", PG.x + 86, PG.y + 262, "moveis")
-  + fur("tree", PG.x + PG.w - 50, PG.y + 252, "plantas") + fur("abajur", PG.x + PG.w - 44, PG.y + 120, "moveis", {lit:true})
-  + glow(PG.x + PG.w / 2, PG.y + 50, 110, "estudio", "rgba(90,255,140,.55)") + glow(PG.x + 64, PG.y + 60, 70, "estudio", "rgba(90,255,140,.4)") + glow(PG.x + PG.w - 27, PG.y + 134, 80, "moveis");
-/* estratégia */
-const ES = ROOMS.find(r => r.key === 3);
-html += fur("metas", ES.x + ES.w / 2 - 55, ES.y + 12, "quadros", {z:4}) + fur("estante", ES.x + 18, ES.y + 14, "moveis") + fur("quadro", ES.x + ES.w - 116, ES.y + 14, "quadros", {z:4})
-  + fur("pufe", ES.x + 26, ES.y + 262, "moveis") + fur("mesinha", ES.x + 90, ES.y + 290, "moveis") + fur("tree", ES.x + ES.w - 50, ES.y + 252, "plantas")
-  + fur("abajur", ES.x + ES.w - 44, ES.y + 120, "moveis", {lit:true})
-  + glow(ES.x + ES.w / 2, ES.y + 50, 110, "quadros", "rgba(255,206,120,.5)") + glow(ES.x + ES.w - 27, ES.y + 134, 80, "moveis");
-/* copa */
-html += fur("cozinha", COPA.x + 14, COPA.y + 10, "moveis") + fur("geladeira", COPA.x + COPA.w - 66, COPA.y + 12, "moveis") + fur("mesa", COPA.x + COPA.w / 2 - 60, COPA.y + 160, "moveis")
-  + fur("plant", COPA.x + 18, COPA.y + 290, "plantas") + fur("plant", COPA.x + COPA.w - 54, COPA.y + 290, "plantas")
-  + glow(COPA.x + 44, COPA.y + 30, 60, "moveis", "rgba(127,227,240,.4)") + glow(COPA.x + COPA.w / 2, COPA.y + 190, 90, "moveis");
-/* corredor */
-html += fur("banco", ED.x + 70, RH + 76, "moveis") + fur("banco", PG.x + 230, RH + 76, "moveis") + fur("banco", ES.x + 150, RH + 76, "moveis") + fur("plant", ED.x + ED.w - 20, RH + 24, "plantas") + fur("plant", 14, RH + 24, "plantas") + fur("plant", W - 54, RH + 24, "plantas")
-  + rep(10, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
+/* cada sala: um item centralizado na parede, a mesa no meio, o tapete e uma planta em cada canto */
+const ES = ROOMS.find(r => r.key === 3), PG = ROOMS.find(r => r.key === 2);
+const naParede = (R, nome, g, o = {}) => fur(nome, R.x + R.w / 2 - FUR[nome][0] / 2, R.y + 12, g, {z:4, ...o});
+const cantos = R => fur("plant", R.x + 16, R.y + RH - 130, "plantas") + fur("plant", R.x + R.w - 56, R.y + RH - 130, "plantas");
+html += naParede(RECEP, "neon", "quadros", {lit:true}) + glow(RECEP.x + RECEP.w / 2, RECEP.y + 32, 80, "quadros", "rgba(90,255,140,.45)")
+  + naParede(ED, "painel", "estudio") + naParede(PG, "telao", "estudio", {lit:true}) + glow(PG.x + PG.w / 2, PG.y + 44, 100, "estudio", "rgba(90,255,140,.5)")
+  + naParede(ES, "metas", "quadros") + naParede(COPA, "cozinha", "moveis") + fur("mesa", COPA.x + COPA.w / 2 - 60, COPA.y + 150, "moveis");
+ROOMS.forEach(R => html += cantos(R));
+html += rep(10, i => glow(100 + i * 200, CY, 80, "", "rgba(255,214,150,.5)"));
 AG.forEach(a => {
   html += `<span class="chair" style="left:${a.hx - 16}px;top:${a.hy - 32}px;z-index:${Math.round(a.hy) - 2}"></span>`;
   html += `<span class="desk on" id="desk${a.k}" style="left:${a.deskX - 75}px;top:${a.deskY}px;z-index:${Math.round(a.deskY + 34)};--c:${a.c}">${a.s === "papers" ? `<span class="mon"><span class="screen s-text">${SCREENS.text}</span></span><span class="top"></span>${[[66,26],[84,34],[102,18]].map(([l, h]) => `<span class="pile" style="left:${l}px;--h:${h}px"></span>`).join("")}${[[12,6,-9],[34,10,7],[118,4,-4],[128,12,11],[52,14,-3]].map(([l, tp, r]) => `<span class="sheet" style="left:${l}px;top:${tp}px;transform:rotate(${r}deg)"></span>`).join("")}<span class="pens"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>` : `<span class="mon"><span class="screen s-${a.s}">${SCREENS[a.s]}</span></span><span class="mon mon2"><span class="screen ${a.s === "matrix" ? "s-term" : "s-tl"}">${a.s === "matrix" ? "<i></i><i></i><i></i><i></i>" : "<i></i><i></i><i></i><b></b>"}</span></span><span class="top"></span><span class="kbd"></span><span class="mug"></span><span class="front"><span class="tag">${esc(a.n)}</span></span></span>`}`;
@@ -812,16 +786,17 @@ const LIGHTS = {dia:"☀️ Dia", tarde:"🌇 Fim de tarde", noite:"🌙 Noite"}
 const STYLE_N = {curto:"Curto", lado:"De lado", cacheado:"Cacheado", raspado:"Raspado", topete:"Topete", longo:"Longo", coque:"Coque", rabo:"Rabo", chanel:"Chanel"};
 const oldMe = store.get("torre-eu-skin", 0);
 function cfgDefault(){
-  return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:3,
+  return {me:{...skinFor(400 + Math.floor(oldMe / 2) * 31, oldMe % 2 ? "f" : "m"), shirt:"#16A34A", name:"Você"}, ag:{}, v:4,
     light:"dia", names:false, fast:false, roam:false, title:"Matrix Code", sofa:"#166534",
-    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"nogueira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"xadrez", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"carpete", c:"#D9A441"}, copa:{name:"Copa", floor:"ceramica", c:"#84CC16"}},
+    rooms:{recep:{name:"Sua sala", floor:"madeira", c:"#22C55E"}, 0:{name:DEPTS[0].t, floor:"madeira", c:"#14B8A6"}, 2:{name:DEPTS[2].t, floor:"madeira", c:"#4ADE80"}, 3:{name:DEPTS[3].t, floor:"madeira", c:"#D9A441"}, copa:{name:"Copa", floor:"madeira", c:"#84CC16"}},
     deco:{plantas:true, tapetes:true, quadros:true, estudio:true, moveis:true}};
 }
 const CFG = (() => { const d = cfgDefault(), s = store.get("torre-cfg", {}) || {};
   if (s.pj){ s.ag = {...(s.ag || {}), "Patrick Jane":s.pj}; } delete s.pj;
-  if (s.v !== 2 && s.v !== 3){ delete s.title; delete s.rooms; delete s.sofa; if (s.me && s.me.shirt === "#C78A1E") delete s.me.shirt; }
-  if (s.v !== 3 && s.rooms){ if (s.rooms[1]){ s.rooms[2] = s.rooms[1]; delete s.rooms[1]; } if (s.rooms.recep?.name === "Recepção") s.rooms.recep.name = "Sua sala"; }
-  s.v = 3;
+  if (s.v !== 2 && s.v !== 3 && s.v !== 4){ delete s.title; delete s.rooms; delete s.sofa; if (s.me && s.me.shirt === "#C78A1E") delete s.me.shirt; }
+  if (s.v !== 3 && s.v !== 4 && s.rooms){ if (s.rooms[1]){ s.rooms[2] = s.rooms[1]; delete s.rooms[1]; } if (s.rooms.recep?.name === "Recepção") s.rooms.recep.name = "Sua sala"; }
+  if (s.v !== 4 && s.rooms) for (const k in s.rooms) delete s.rooms[k].floor;
+  s.v = 4;
   const c = {...d, ...s, me:{...d.me, ...(s.me || {})}, rooms:{}, deco:{...d.deco, ...(s.deco || {})}};
   for (const k in d.rooms) c.rooms[k] = {...d.rooms[k], ...(s.rooms?.[k] || {})};
   return c; })();
@@ -1146,7 +1121,7 @@ async function send(toQueue){
 }
 
 /* ---------- seu personagem ---------- */
-const P = {n:"Você", x:RECEP.dx, y:RECEP.y + 280, gen:0, path:[], keyMove:false};
+const P = {n:"Você", x:RECEP.dx, y:RECEP.y + Math.round(RH * .62), gen:0, path:[], keyMove:false};
 P.el = document.createElement("div"); P.el.className = "sp me";
 P.el.innerHTML = `<span class="flipper"></span><span class="nm">Você</span><span class="prompt" hidden></span>`;
 world.appendChild(P.el); place(P);
@@ -1303,7 +1278,7 @@ function setScale(s){
   $("#sizer").style.width = W * scale + "px"; $("#sizer").style.height = H * scale + "px";
   m.scrollLeft = cx * scale - m.clientWidth / 2; m.scrollTop = cy * scale - m.clientHeight / 2;
 }
-function fit(){ setScale(Math.max(.55, Math.min(1.35, ($("#map").clientWidth - 14) / W))); }
+function fit(){ setScale(Math.max(.55, Math.min(1.35, ($("#map").clientWidth - 4) / W, (innerHeight - 190) / H))); }
 $("#zin").onclick = () => setScale(scale * 1.2); $("#zout").onclick = () => setScale(scale / 1.2); $("#zfit").onclick = fit;
 fit(); addEventListener("resize", fit);
 
