@@ -1592,7 +1592,7 @@ function igRender(){
   const body = $("#igBody"), hero = $("#igHero");
   const p = IG.perfil?.[0], novos30 = (IG.seg || []).reduce((t, r) => t + (r.follower_count_1d || 0), 0);
   if (p){ $("#igSub").textContent = `@${p.username} · ${fmt(p.media_count)} publicações`; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
-  $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + (typeof PUBLIC !== "undefined" ? " · atualiza sozinho a cada 15 min" : " · atualiza sozinho a cada 10 min") : "";
+  $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + (typeof PUBLIC !== "undefined" ? " · atualiza sozinho a cada 5 min" : " · atualiza sozinho a cada 10 min") : "";
   const ps = igPeriodos();
   const fechados = ps.filter(x => !x.parcial), cur = fechados.at(-1), prev = fechados.at(-2);
   // os novos seguidores só existem para os últimos 30 dias: um mês que começa antes disso sairia contado pela metade
@@ -1641,7 +1641,7 @@ async function igBuscar(nome){
   const mcp = await window.claude?.use?.("mcp"); if (!mcp){ igErro({code:"server_not_connected"}); return; }
   try { igRecebe(nome, await mcp.callTool("Windsor.ai", "get_data", IG_Q[nome], {cache:IG_CACHE})); } catch (e){ igErro(e); }
 }
-// no site público os números vêm do Supabase, gravados pelo robô do GitHub a cada 15 min
+// no site público os números vêm do Supabase, gravados pelo robô do GitHub a cada 5 min
 async function igSite(){
   const n = await window.IG_SITE?.((nome, dados, quando) => { IG[nome] = dados; IG.quando = Math.max(IG.quando || 0, Date.parse(quando) || 0); igRender(); });
   if (n == null) $("#igBody").innerHTML = `<p class="msg">Não consegui ler os números agora. Tente ↻ Atualizar.</p>`;
