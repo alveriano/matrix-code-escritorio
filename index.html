@@ -1838,6 +1838,11 @@ function ytRender(){
   if (typeof PUBLIC === "undefined"){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube aparecem no site do escritório, onde o robô do GitHub grava a cada 5 min.</p>`; return; }
   if (c?.inscritos != null) $("#ytBtn").textContent = `▶️ YouTube · ${fmt(c.inscritos)}`;
   if (!c){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube ainda não chegaram. Eles aparecem aqui depois da próxima atualização automática.</p>`; return; }
+  // com menos de dois dias de leituras o dia a dia sai vazio: abre uma vez em "Desde o início"
+  if (!IG.ytAuto && (IG.yt_hist || []).length < 2 && ["dia", "sem", "mes"].includes(IG.modo)){
+    IG.ytAuto = true; IG.modo = "tudo"; $("#igFaixa").hidden = true;
+    document.querySelectorAll("[data-ig]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.ig === "tudo")));
+  }
   // o YouTube só dá o total do canal: o robô guarda a última leitura de cada dia e a diferença entre duas leituras é o que o canal ganhou
   const h = (IG.yt_hist || []).filter(r => r.views != null), todos = (IG.yt_videos || []).filter(v => /^[\w-]{11}$/.test(v.id) && v.date);
   const dias = h.slice(1).map((r, i) => ({date:r.date, views:r.views - h[i].views, inscritos:r.inscritos != null && h[i].inscritos != null ? r.inscritos - h[i].inscritos : null}));
