@@ -232,7 +232,7 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .ig .hero b{display:block;font-family:var(--f-display);font-weight:900;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
 .ig .hero span{font-size:12px;color:var(--muted)}
 .ig .tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.ig .tabs button{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent}
+.ig .tabs button{flex:0 0 auto;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent}
 .ig .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .ig .tabs .when{margin-left:auto;font-size:12px;color:var(--muted)}
 .ig .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -282,6 +282,8 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 .ig th,.ig td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 .ig th:first-child,.ig td:first-child{text-align:left}
 .ig th{font-weight:600;color:var(--muted);font-size:12px}
+.ig .top .dur{font-family:var(--f-mono);font-size:11px}
+.ig td.tit{text-align:left;max-width:420px;overflow:hidden;text-overflow:ellipsis}
 .ig .msg{padding:14px;border-radius:12px;background:var(--bg);color:var(--muted)}
 .vozbar #vozBtn[aria-pressed="true"]{background:#DC2626;border-color:#DC2626;color:#fff;animation:vozpulse 1.4s ease-in-out infinite}
 @keyframes vozpulse{50%{box-shadow:0 0 0 6px rgba(220,38,38,.25)}}
@@ -415,6 +417,7 @@ h1{font-size:30px;line-height:1;letter-spacing:.02em}
 </section>
 <section class="ig" id="ig" hidden aria-labelledby="igTitle"><div class="box">
   <header><div><h2 id="igTitle">Instagram</h2><p class="sub" id="igSub">@cowtalk.podcast</p></div><button class="x" id="igX" aria-label="Fechar painel do Instagram">×</button></header>
+  <div class="tabs" role="group" aria-label="Rede"><button data-rede="ig" aria-pressed="true">Instagram</button><button data-rede="yt" aria-pressed="false">YouTube</button></div>
   <div class="hero" id="igHero"></div>
   <div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button id="igRef">↻ Atualizar</button><span class="when" id="igWhen"></span></div>
   <div id="igBody"><p class="msg">Buscando os números do Instagram…</p></div>
@@ -1646,7 +1649,7 @@ $("#voz").addEventListener("submit", async e => {
 if (typeof PUBLIC !== "undefined"){ $("#voz").hidden = true; $("#vozMsg").hidden = true; }
 
 /* painel do Instagram (Windsor.ai): números do dia, da semana e do mês */
-const IG = {modo:"dia", linha:"views", top:"media_views", posts:null, dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
+const IG = {rede:"ig", ytTop:"views", modo:"dia", linha:"views", top:"media_views", posts:null, dias:null, seg:null, perfil:null, quando:0, watches:[], aberto:false};
 const IG_Q = {
   dias:{connector:"instagram", fields:["date","reach","views","accounts_engaged","total_interactions","likes","comments","shares","saves"], date_preset:"last_180dT"},
   seg:{connector:"instagram", fields:["date","follower_count_1d"], date_preset:"last_30d"},
@@ -1752,6 +1755,8 @@ function igTopHtml(){
     <p class="nota">${fmt(ps.length)} posts no período · mediana de ${fmt(med)} ${IG_TOP.find(([m]) => m === k)[1].toLowerCase()} por post. Posts novos ainda estão juntando números.</p></div>`;
 }
 function igRender(){
+  if (IG.rede === "yt") return ytRender();
+  $("#igTitle").textContent = "Instagram";
   const body = $("#igBody"), hero = $("#igHero");
   const p = IG.perfil?.[0], novos30 = (IG.seg || []).reduce((t, r) => t + (r.follower_count_1d || 0), 0);
   if (p){ $("#igSub").textContent = `@${p.username} · ${fmt(p.media_count)} publicações`; $("#igBtn").textContent = `📊 Instagram · ${fmt(p.followers_count)}`; }
@@ -1789,6 +1794,42 @@ function igRender(){
   body.querySelectorAll("[data-igt]").forEach(b => b.addEventListener("click", () => { IG.top = b.dataset.igt; igRender(); }));
   body.querySelectorAll("[data-igl]").forEach(b => b.addEventListener("click", () => { IG.linha = b.dataset.igl; igRender(); }));
 }
+/* aba do YouTube: só no site público, com os números que o robô do GitHub grava no Supabase */
+const YT_TOP = [["views","Visualizações"],["likes","Curtidas"],["comments","Comentários"]];
+function ytDur(d){ const m = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(d || ""); if (!m) return ""; const [h, mi, s] = [+m[1] || 0, +m[2] || 0, +m[3] || 0]; return h ? `${h}h${String(mi).padStart(2, "0")}` : `${mi}:${String(s).padStart(2, "0")}`; }
+function ytRender(){
+  const body = $("#igBody"), hero = $("#igHero"), c = IG.yt_canal?.[0];
+  $("#igTitle").textContent = "YouTube"; $("#igSub").textContent = c ? `${c.titulo} · ${fmt(c.videos)} vídeos` : "@PodcastCowtalk";
+  $("#igWhen").textContent = IG.quando ? "Atualizado às " + new Date(IG.quando).toLocaleTimeString("pt-BR", {hour:"2-digit", minute:"2-digit"}) + " · atualiza sozinho a cada 5 min" : "";
+  if (typeof PUBLIC === "undefined"){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube aparecem no site do escritório, onde o robô do GitHub grava a cada 5 min.</p>`; return; }
+  if (!c){ hero.innerHTML = ""; body.innerHTML = `<p class="msg">Os números do YouTube ainda não chegaram. Eles aparecem aqui depois da próxima atualização automática.</p>`; return; }
+  // o histórico guarda a última leitura de cada dia; a diferença entre dois dias é o que o canal ganhou
+  const h = (IG.yt_hist || []).filter(r => r.views != null), ant = h.at(-2), sinal = n => n == null ? "—" : (n >= 0 ? "+" : "") + fmt(n);
+  const ganho = ant ? [c.views - ant.views, c.inscritos != null && ant.inscritos != null ? c.inscritos - ant.inscritos : null] : [null, null];
+  hero.innerHTML = `<div><b>${c.inscritos == null ? "oculto" : fmt(c.inscritos)}</b><span>inscritos agora${ant ? ` · ${sinal(ganho[1])} desde ontem` : ""}</span></div><div><b>${fmt(c.views)}</b><span>visualizações no total</span></div><div><b>${sinal(ganho[0])}</b><span>${ant ? "visualizações desde ontem" : "visualizações ganhas: o histórico começa hoje"}</span></div>`;
+  const dias = h.slice(1).map((r, i) => ({date:r.date, views:r.views - h[i].views})).slice(-30);
+  const W_ = 1000, H_ = 180, bw = W_ / Math.max(dias.length, 1), mx = Math.max(...dias.map(x => x.views), 1);
+  const bars = dias.map((x, i) => { const hh = Math.max(x.views, 0) / mx * (H_ - 24), rot = dtx(x.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"}); return `<g><rect class="bar" x="${i * bw + bw * .15}" y="${H_ - 18 - hh}" width="${bw * .7}" height="${Math.max(hh, 1)}" rx="3"><title>${esc(rot)}: ${fmt(x.views)} visualizações</title></rect>${dias.length <= 15 || i % 3 === 0 ? `<text x="${i * bw + bw / 2}" y="${H_ - 4}" text-anchor="middle">${esc(rot)}</text>` : ""}</g>`; }).join("");
+  const graf = dias.length >= 2 ? `<div class="chart"><h3>Visualizações ganhas por dia</h3><svg viewBox="0 0 ${W_} ${H_}" role="img" aria-label="Gráfico de visualizações ganhas por dia">${bars}</svg></div>` : `<p class="msg">O gráfico de crescimento aparece depois de alguns dias: o YouTube só dá o total, então o robô guarda uma leitura por dia e compara.</p>`;
+  const vs = (IG.yt_videos || []).filter(v => /^[\w-]{11}$/.test(v.id)), k = IG.ytTop;
+  const med = (() => { const v = vs.map(r => r[k] || 0).sort((a, b) => a - b); return v[Math.floor(v.length / 2)] || 0; })();
+  const link = v => `https://www.youtube.com/watch?v=${v.id}`, data = v => dtx(v.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit", year:"2-digit"});
+  const lista = [...vs].sort((a, b) => (b[k] || 0) - (a[k] || 0)).slice(0, 8).map((v, i) => {
+    const n = (m, rot) => `<span><b class="${m === k ? "on" : ""}">${fmt(v[m])}</b> ${rot}</span>`;
+    return `<li><span class="pos">${i + 1}</span><div class="cap"><p title="${esc(v.titulo)}">${esc(v.titulo)}</p><small>${esc(data(v))} · <span class="dur">${esc(ytDur(v.duracao))}</span>${(v[k] || 0) >= 2 * med && med > 0 ? " · 🔥 " + ((v[k] || 0) / med).toFixed(1).replace(".", ",") + "× a mediana" : ""} · <a href="${link(v)}" target="_blank" rel="noopener">abrir ↗</a></small></div><div class="nums">${n("views", "visualiz.")}${n("likes", "curt.")}${n("comments", "coment.")}</div></li>`;
+  }).join("");
+  const top = vs.length ? `<div class="top"><div class="cmp-top"><h3>Melhores vídeos entre os ${fmt(vs.length)} mais recentes</h3><div class="chips" role="group" aria-label="Ordenar vídeos por">${YT_TOP.map(([m, r]) => `<button data-ytt="${m}" aria-pressed="${m === k}">${r}</button>`).join("")}</div></div><ol>${lista}</ol>
+    <p class="nota">Mediana de ${fmt(med)} ${YT_TOP.find(([m]) => m === k)[1].toLowerCase()} por vídeo. Vídeos novos ainda estão juntando números.</p></div>` : "";
+  const linhas = vs.map(v => `<tr><td>${esc(data(v))}</td><td class="tit" title="${esc(v.titulo)}"><a href="${link(v)}" target="_blank" rel="noopener" style="color:inherit">${esc(v.titulo)}</a></td><td>${esc(ytDur(v.duracao))}</td><td>${fmt(v.views)}</td><td>${fmt(v.likes)}</td><td>${fmt(v.comments)}</td></tr>`).join("");
+  body.innerHTML = `${graf}${top}<div class="tbl"><h3>Vídeos recentes</h3><table><thead><tr><th>Data</th><th>Título</th><th>Duração</th><th>Visualizações</th><th>Curtidas</th><th>Comentários</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+  body.querySelectorAll("[data-ytt]").forEach(b => b.addEventListener("click", () => { IG.ytTop = b.dataset.ytt; ytRender(); }));
+}
+document.querySelectorAll("[data-rede]").forEach(b => b.addEventListener("click", () => {
+  IG.rede = b.dataset.rede; document.querySelectorAll("[data-rede]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  document.querySelectorAll("[data-ig]").forEach(x => x.hidden = IG.rede === "yt");
+  if (IG.rede === "ig") $("#igSub").textContent = IG.perfil?.[0] ? "" : "@cowtalk.podcast";
+  igRender();
+}));
 function igErro(e){
   const c = e?.code, msg = c === "not_in_manifest" || c === "not_granted" ? "O Windsor.ai não foi liberado para esta página. Abra o menu de permissões da página e libere." :
     c === "server_not_connected" || c === "needs_reauth" ? "O Windsor.ai não está conectado. Conecte em claude.ai → Configurações → Conectores." :
