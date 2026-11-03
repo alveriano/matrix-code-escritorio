@@ -348,10 +348,44 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
 @media (pointer:coarse){.padctl{display:grid}.card{bottom:calc(120px + env(safe-area-inset-bottom,0px))}}
 @media (max-width:560px){.card{left:max(16px,env(safe-area-inset-left,0px));width:auto}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:0s!important}}
+/* visual: topo, salas, moldura do mapa e área de conversa */
+body{background:radial-gradient(1100px 420px at 10% -12%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 70%) no-repeat,var(--bg)}
+.head{align-items:center;gap:16px 28px;margin-bottom:18px}
+.brand{display:grid;gap:8px;min-width:0;flex:1 1 440px}
+.kicker{margin:0;display:inline-flex;align-items:center;gap:9px;font-family:var(--f-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.kicker::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent);animation:pulse 1.8s infinite}
+h1{font-size:clamp(40px,6vw,64px);letter-spacing:.01em}
+.lead{margin:0;font-size:14.5px;line-height:1.55;max-width:70ch}
+.controls{gap:4px;padding:5px;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 10px 30px -18px rgba(0,0,0,.6)}
+.controls .pill{border-color:transparent;background:transparent;border-radius:11px;padding:8px 12px;transition:background .15s,border-color .15s}
+.controls .pill:hover{background:var(--bg);border-color:var(--line)}
+.controls .pill[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.controls .pill.online{color:var(--accent);font-weight:600;background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.legend{align-items:center;gap:6px;margin-bottom:12px}
+.legend::before{content:"Salas";font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.legend button{gap:8px;padding:6px 10px 6px 11px;border-radius:10px;font-size:13px;font-weight:500;transition:border-color .15s,background .15s}
+.legend button:hover{border-color:var(--c);background:color-mix(in srgb,var(--c) 12%,var(--panel))}
+.legend i{width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent)}
+.legend small{font-family:var(--f-mono);font-size:11px;line-height:1;padding:3px 6px;border-radius:999px;background:var(--bg)}
+.map{border-width:8px;border-radius:18px;box-shadow:0 0 0 1px var(--line),0 30px 70px -30px rgba(0,0,0,.7)}
+.zoom{right:20px;top:20px;gap:6px}
+.zoom button{width:36px;height:36px;border-radius:10px;font-size:16px;box-shadow:0 6px 16px rgba(0,0,0,.28)}
+.zoom button:hover{border-color:var(--accent)}
+.dock{max-width:1560px;margin:16px auto 0;padding:12px;border:1px solid var(--line);border-radius:18px;background:var(--panel);display:grid;gap:10px;box-shadow:0 14px 40px -26px rgba(0,0,0,.6)}
+.dock .chatbar{margin:0;max-width:none}
+.dock .chatbar input{padding:11px 16px;border-radius:12px;background:var(--bg)}
+.dock .chatbar input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.dock .btn{border-radius:12px;padding:10px 18px;font-weight:600;white-space:nowrap}
+.dock .btn.primary{min-width:100px}
+.dock .vozmsg{margin:-2px 0 0;padding:0 4px;min-height:0}
+.dock .vozmsg:empty{display:none}
+.dock .hint{margin:0;padding:10px 4px 0;border-top:1px solid var(--line)}
+@media (max-width:640px){.lead{font-size:13.5px}.controls,.legend{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.controls{width:100%}.controls::-webkit-scrollbar,.legend::-webkit-scrollbar{display:none}.controls>*,.legend>*{flex:0 0 auto}.legend{margin-inline:-16px;padding-inline:16px}.vozbar{flex-wrap:wrap}.vozbar input{flex:1 1 100%;order:-1}.vozbar .btn{flex:1}.dock .btn.primary{min-width:0}}
 </style>
 
 <header class="head">
-  <div>
+  <div class="brand">
+    <p class="kicker">Escritório virtual · ao vivo</p>
     <h1>Matrix Code</h1>
     <p class="lead">Bem-vindo ao escritório da Matrix Code. Monte seu boneco em 🎨 Personalizar, ande com as setas ou clicando no chão e converse com quem estiver aqui, ao vivo. O Patrick Jane edita os vídeos, o Xanax programa e a Helena cuida da papelada.</p>
   </div>
@@ -368,16 +402,18 @@ h1{font-family:var(--f-display);font-weight:900;font-size:clamp(38px,7vw,66px);l
   <div class="map" id="map"><div class="sizer" id="sizer"><div class="world" id="world"></div></div></div>
   <div class="zoom"><button id="zin" aria-label="Aproximar">+</button><button id="zout" aria-label="Afastar">−</button><button id="zfit" aria-label="Ver o andar inteiro">⤢</button></div>
 </div>
+<section class="dock" aria-label="Conversa">
 <form class="chatbar" id="chat" hidden autocomplete="off"><input id="chatIn" maxlength="140" placeholder="💬 Fale com quem está na sala… (Enter envia)" aria-label="Mensagem para quem está na sala"><button class="btn primary">Enviar</button></form>
 <form class="chatbar vozbar" id="voz" autocomplete="off"><button type="button" class="btn" id="vozBtn" aria-pressed="false">🎙️ Falar com os agentes</button><input id="vozIn" maxlength="300" placeholder="Ou escreva: “Xanax, crie um script que…”" aria-label="Ordem para um agente, começando pelo nome dele"><button class="btn primary">Mandar</button></form>
 <p class="vozmsg" id="vozMsg" role="status"></p>
+<p class="hint">Teclado: setas ou WASD andam · Enter abre o agente perto de você · Esc fecha. Clique no chão para ir até lá. No celular, use os botões no canto.</p>
+</section>
 <section class="ig" id="ig" hidden aria-labelledby="igTitle"><div class="box">
   <header><div><h2 id="igTitle">Instagram</h2><p class="sub" id="igSub">@cowtalk.podcast</p></div><button class="x" id="igX" aria-label="Fechar painel do Instagram">×</button></header>
   <div class="hero" id="igHero"></div>
   <div class="tabs" role="group" aria-label="Período"><button data-ig="dia" aria-pressed="true">Dia a dia</button><button data-ig="sem" aria-pressed="false">Semana a semana</button><button data-ig="mes" aria-pressed="false">Mês a mês</button><button id="igRef">↻ Atualizar</button><span class="when" id="igWhen"></span></div>
   <div id="igBody"><p class="msg">Buscando os números do Instagram…</p></div>
 </div></section>
-<p class="hint">Teclado: setas ou WASD andam · Enter abre o agente perto de você · Esc fecha. Clique no chão para ir até lá. No celular, use os botões no canto.</p>
 
 <aside class="card" id="card" hidden></aside>
 <div class="padctl" aria-label="Controles do personagem"><button data-pad="U" aria-label="Andar para cima">▲</button><button data-pad="L" aria-label="Andar para a esquerda">◀</button><button data-pad="D" aria-label="Andar para baixo">▼</button><button data-pad="R" aria-label="Andar para a direita">▶</button><button data-pad="T" id="padTalk" disabled>Falar</button></div>
