@@ -1,4 +1,4 @@
-name: Números do Instagram
+name: Números do Instagram e do YouTube
 
 on:
   schedule:
@@ -24,3 +24,9 @@ jobs:
           WINDSOR_API_KEY: ${{ secrets.WINDSOR_API_KEY }}
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
         run: python3 scripts/instagram.py
+      - name: Buscar no YouTube e gravar no Supabase
+        if: ${{ !cancelled() }}
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: python3 scripts/youtube.py
